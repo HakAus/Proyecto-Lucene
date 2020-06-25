@@ -27,6 +27,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.jsoup.Jsoup;
 import org.tartarus.snowball.ext.SpanishStemmer;
 import ucar.ma2.Index;
+import ucar.nc2.iosp.misc.AbstractLightningIOSP;
 
 
 public class Indexador
@@ -65,7 +66,7 @@ public class Indexador
 		CharTermAttribute caracter = stream.addAttribute(CharTermAttribute.class);
 		stream.reset();
 		while (stream.incrementToken()) {
-			System.out.print(" [" + caracter.toString()+ "] ");
+			System.out.print(" [" + caracter.toString()+ "]" + "\n");
 		}
 		stream.end();
 		stream.close();
@@ -112,10 +113,10 @@ public class Indexador
 		// Se indexa el <body>
 		String HTML = Html.body().text();
 		IndexableField body = new TextField("texto",HTML, Field.Store.YES);
-
 		// Se indexa el <title>
 		HTML = Html.getElementsByTag("title").text();
 		IndexableField title = new TextField("titulo",HTML,Field.Store.YES);
+
 		// Se indexa los <h?>
 		StringBuilder encabezados = new StringBuilder();
 		encabezados.append(Html.getElementsByTag("h1").text());
@@ -130,7 +131,6 @@ public class Indexador
 		// Se indexa las <a>
 		HTML = Html.getElementsByTag("a").text();
 		IndexableField links = new TextField("ref",HTML,Field.Store.YES);
-
 
 		DocumentoLucene.add(headers);
 		DocumentoLucene.add(links);

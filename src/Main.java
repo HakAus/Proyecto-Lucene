@@ -17,6 +17,8 @@ import java.util.ArrayList;
 public class Main {
 
     public static void main(String[] args) throws IOException {
+        long inicio = System.currentTimeMillis();
+
         Lector lector = new Lector();
 
         Indexador indexador = new Indexador();
@@ -36,5 +38,10 @@ public class Main {
         catch (IOException a) {
             System.out.println("Hubo un problema al leer los archivos.");
         }
+        long fin = System.currentTimeMillis();
+
+        double tiempo = (double) ((fin - inicio)/1000);
+
+        System.out.println(tiempo +" segundos");
     }
 }
