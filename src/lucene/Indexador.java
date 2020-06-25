@@ -7,17 +7,11 @@ import java.util.ArrayList;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.core.StopFilter;
-import org.apache.lucene.analysis.snowball.SnowballFilter;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 
 import org.apache.lucene.index.IndexWriterConfig;
@@ -25,22 +19,15 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.jsoup.Jsoup;
-import org.tartarus.snowball.ext.SpanishStemmer;
-import ucar.ma2.Index;
-import ucar.nc2.iosp.misc.AbstractLightningIOSP;
 
 
 public class Indexador
 {
-
 	public IndexWriter writer;
 	CharArraySet stopWords;
-	Analyzer analizador;
 	ArrayList<String> bodies, referencias, titulos, encabezados;
 
-	public Indexador()
-    {
-        this.writer = configurarIndexador();
+	public Indexador() {
         bodies = new ArrayList<String>();
         referencias = new ArrayList<String>();
         titulos = new ArrayList<String>();
@@ -72,46 +59,30 @@ public class Indexador
 		stream.close();
 	}
 
-//	public TokenStream tokenStream(String fieldName, Reader reader) {
-//		return new SnowballFilter()new StopFilter(true,
-//				new LowerCaseTokenizer(reader),
-//				stopWords);
-//	}
-	public IndexWriter configurarIndexador(){
-		analizador = new Analyzer() {
-
-			@Override
-			protected TokenStreamComponents createComponents(String nombreCampo) {
-				TokenizerEspanol tokenizerEspanol = new TokenizerEspanol();
-				// Se asignan los stopwords al analizador
-				TokenStream filtroMinusculas = new LowerCaseFilter(tokenizerEspanol);
-				TokenStream filtroStopWords = new StopFilter(filtroMinusculas, stopWords);
-				// Se hace el stemming de acuerdo a la implementación Snowball del stemmer en español
-				SpanishStemmer stemmerEspanol = new SpanishStemmer();
-				TokenStream filtro = new SnowballFilter(filtroStopWords,stemmerEspanol);
-				return new TokenStreamComponents(tokenizerEspanol, filtro);
-			}
-		};
+	public void configurarIndexador() throws IOException {
+		Analizador analizador = new Analizador();
+		analizador.leerStopWords();
+		Path rutaDirectorioIndice = Paths.get(".","indices");
+		Directory directorioIndice = FSDirectory.open(rutaDirectorioIndice);
 		IndexWriterConfig configuracionIndice = new IndexWriterConfig(analizador);
-		Path rutaDirectorioIndice = Paths.get(".","/indices");
 		try {
-			Directory directorioIndice = FSDirectory.open(rutaDirectorioIndice);
 			writer = new IndexWriter(directorioIndice, configuracionIndice);
-			return writer;
 		}
 		catch (IOException e){
-			System.out.println("Hubo un problema al configurar el indexador");
+			System.out.println("Hubo un problema al configurar el indexador jaja");
 		}
-		return null;
 	}
 
-	public void indexarContenidos(String html)
-	{
+	public void indexarContenidos(String html) {
 		Document DocumentoLucene = new Document();
 
 		org.jsoup.nodes.Document Html = Jsoup.parse(html);
-		// Se indexa el <body>
-		String HTML = Html.body().text();
+
+		// Se indexa el body del html puro
+		String HTML = Html.html();
+//		IndexableField htmlPuro = new TextField("html",HTML,Field.Store.YES);
+		// Se indexa el body del html
+		HTML = Html.body().text();
 		IndexableField body = new TextField("texto",HTML, Field.Store.YES);
 		// Se indexa el <title>
 		HTML = Html.getElementsByTag("title").text();
@@ -132,9 +103,12 @@ public class Indexador
 		HTML = Html.getElementsByTag("a").text();
 		IndexableField links = new TextField("ref",HTML,Field.Store.YES);
 
+		// Con stemming
 		DocumentoLucene.add(headers);
-		DocumentoLucene.add(links);
 		DocumentoLucene.add(body);
+		// Sin stemming
+//		DocumentoLucene.add(htmlPuro);
+		DocumentoLucene.add(links);
 		DocumentoLucene.add(title);
 
 		try {
