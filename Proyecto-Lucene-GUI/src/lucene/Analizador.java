@@ -3,6 +3,7 @@ package lucene;
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.snowball.SnowballFilter;
+import org.tartarus.snowball.ext.KpStemmer;
 import org.tartarus.snowball.ext.SpanishStemmer;
 
 import java.io.BufferedReader;
@@ -55,14 +56,17 @@ public class Analizador {
         };
     }
 
-    public String limpiarAcentos(String cadena) {
+    public String limpiarAcentos(String cadena, boolean busqueda) {
         String limpio = null;
         if (cadena !=null) {
             String valor = cadena;
             // Normalizar texto para eliminar acentos, dieresis, cedillas y tildes
             limpio = Normalizer.normalize(valor, Normalizer.Form.NFD);
             // Quitar caracteres no ASCII excepto la enie, interrogacion que abre, exclamacion que abre, grados, U con dieresis.
-            limpio = limpio.replaceAll("[^A-Za-z\\u0303 ]", "");
+            if (busqueda)
+                limpio = limpio.replaceAll("[^A-Za-z\\u0303\\-+&|!(){}\\[\\]^\"~*?: ]", "");
+            else
+                limpio = limpio.replaceAll("[^A-Za-z\\u0303 ]", "");
             // Regresar a la forma compuesta, para poder comparar la enie con la tabla de valores
             limpio = Normalizer.normalize(limpio, Normalizer.Form.NFC);
         }

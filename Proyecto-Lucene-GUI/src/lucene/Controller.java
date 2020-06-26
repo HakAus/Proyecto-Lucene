@@ -1,53 +1,64 @@
 package lucene;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 
-import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class Controller {
 
+
+
     // JAVAFX
-    @FXML
-    private StackPane stkPane;
-    @FXML
-    private TabPane tbpVentanas;
-    @FXML
-    private Tab tabIndexacion, tabBusqueda;
-    @FXML
-    private GridPane grdIndexacion, grdBusqueda;
-    @FXML
-    private TextField tfdDirectorioIndexacion, tfdArchivoIndexar, tfdDirectorioIndice,
+    @FXML private StackPane stkPane;
+    @FXML private TabPane tbpVentanas;
+    @FXML private Tab tabIndexacion, tabBusqueda;
+    @FXML private GridPane grdIndexacion, grdBusqueda;
+    @FXML public TableView<DocumentoEncontrado> tblEscalafon;
+    @FXML public TableColumn<String,DocumentoEncontrado> clmPosicion;
+    @FXML public TableColumn<String,DocumentoEncontrado> clmTitulo;
+    @FXML public TableColumn<String,DocumentoEncontrado> clmPagina;
+    @FXML public TableColumn<String,DocumentoEncontrado> clmPuntaje;
+    @FXML private TextField tfdDirectorioIndexacion, tfdArchivoIndexar, tfdDirectorioIndice,
                       tfdConsulta;
-    @FXML
-    private Button btnIndexar, btnBuscar,btnVerMas;
-    @FXML
-    private RadioButton rdbActualizar;
-    @FXML
-    private Label lblEstadoIndexacion;
-    @FXML
-    private ComboBox<String> cbxCampos;
-    @FXML
-    private ListView<?> lvwEscalafon;
+    @FXML private Button btnIndexar, btnBuscar,btnVerMas;
+    @FXML private RadioButton rdbActualizar;
+    @FXML private Label lblEstadoIndexacion;
+    @FXML private ComboBox<String> cbxCampos;
 
     // LUCENE
     Lector lector = new Lector();
     Indexador indexador = new Indexador();
     Buscador buscador = new Buscador();
     Alert alerta = new Alert(Alert.AlertType.WARNING,"");
-    ArrayList<String> archivos;
+    ArrayList<Html_Indexado> archivos;
 
 
     public void llenarComboBox(){
-        if (cbxCampos.getItems() != null)
+        if (cbxCampos.getItems().size() == 0)
             cbxCampos.getItems().addAll("titulo","texto","encab","ref");
+    }
+
+    public void configurarTabla(){
+        clmPosicion.setCellValueFactory(new PropertyValueFactory<>("posicion"));
+        clmTitulo.setCellValueFactory(new PropertyValueFactory<>("tituloMostrar"));
+        clmPagina.setCellValueFactory(new PropertyValueFactory<>("btnPagina"));
+        clmPuntaje.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
+        tblEscalafon.setPlaceholder(new Label("No hay resultados"));
+    }
+
+    public void limpiarTabla(){
+        tblEscalafon.getItems().clear();
     }
     public boolean validarCamposIndexacion(){
         return !tfdArchivoIndexar.getText().equals("")
@@ -69,7 +80,7 @@ public class Controller {
                 long inicio = System.currentTimeMillis();
                 indexador.configurarIndexador(tfdDirectorioIndexacion.getText(),rdbActualizar.isSelected());
                 int cont = 0;
-                for (String html : archivos) {
+                for (Html_Indexado html : archivos) {
                     indexador.indexarContenidos(html);
                     cont++;
                 }
@@ -98,10 +109,25 @@ public class Controller {
     }
 
     public void buscar(ActionEvent actionEvent){
-        buscador.buscarDocumento(tfdDirectorioIndice.getText(),
+        configurarTabla();
+        limpiarTabla();
+        ArrayList<DocumentoEncontrado> resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
                                 cbxCampos.getSelectionModel().getSelectedItem(),
                                 tfdConsulta.getText(),
                                 20);
+        for (DocumentoEncontrado doc : resultados){
+            tblEscalafon.getItems().add(doc);
+        }
+    }
+
+    public void testHtml(ActionEvent actionEvent){
+        File htmlFile = new File("/Users/austinedwardhakansonhidalgo/Desktop/test.html");
+        try {
+            Desktop.getDesktop().browse(htmlFile.toURI());
+        }
+        catch (IOException e){
+            System.out.println("Hubo un problema al cargar la pagina web");
+        }
     }
 
 }

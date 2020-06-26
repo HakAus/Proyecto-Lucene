@@ -4,10 +4,11 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -15,13 +16,13 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="stkPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lucene.Controller">
+<StackPane fx:id="stkPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lucene.Controller">
    <children>
-      <TabPane fx:id="tbpVentanas" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane fx:id="tbpVentanas" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab fx:id="tabIndexacion" text="Indexar">
             <content>
-                  <GridPane fx:id="grdIndexacion" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="367.0" prefWidth="500.0">
+                  <GridPane fx:id="grdIndexacion" prefHeight="650.0" prefWidth="500.0">
                     <columnConstraints>
                       <ColumnConstraints hgrow="SOMETIMES" maxWidth="204.0" minWidth="10.0" prefWidth="158.0" />
                       <ColumnConstraints hgrow="SOMETIMES" maxWidth="280.0" minWidth="10.0" prefWidth="182.0" />
@@ -72,19 +73,19 @@
           </Tab>
           <Tab fx:id="tabBusqueda" text="Buscar">
             <content>
-                  <GridPane fx:id="grdBusqueda" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="367.0" prefWidth="500.0">
+                  <GridPane fx:id="grdBusqueda" prefHeight="650.0" prefWidth="600.0">
                      <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="204.0" minWidth="10.0" prefWidth="158.0" />
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="280.0" minWidth="10.0" prefWidth="169.0" />
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="258.0" minWidth="10.0" prefWidth="172.0" />
                      </columnConstraints>
                      <rowConstraints>
-                        <RowConstraints maxHeight="129.0" minHeight="10.0" prefHeight="79.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="129.0" minHeight="10.0" prefHeight="52.0" vgrow="SOMETIMES" />
                         <RowConstraints maxHeight="256.0" minHeight="10.0" prefHeight="65.0" vgrow="SOMETIMES" />
-                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="76.0" vgrow="SOMETIMES" />
-                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="81.0" vgrow="SOMETIMES" />
-                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="97.0" vgrow="SOMETIMES" />
-                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="97.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="65.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="262.0" minHeight="10.0" prefHeight="261.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="131.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="218.0" minHeight="10.0" prefHeight="87.0" vgrow="SOMETIMES" />
                      </rowConstraints>
                      <children>
                         <Label text="Ventana de búsqueda" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.valignment="TOP">
@@ -115,12 +116,19 @@
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </GridPane.margin>
                         </ComboBox>
-                        <ListView fx:id="lvwEscalafon" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="3" GridPane.rowSpan="2">
-                           <GridPane.margin>
-                              <Insets left="20.0" right="20.0" />
-                           </GridPane.margin>
-                        </ListView>
                         <Button fx:id="btnVerMas" mnemonicParsing="false" text="Ver más" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="5" />
+                        <Button fx:id="btnHTML" mnemonicParsing="false" onAction="#testHtml" text="Test html" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="CENTER" />
+                        <TableView fx:id="tblEscalafon" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="3" GridPane.rowSpan="2">
+                          <columns>
+                            <TableColumn fx:id="clmPosicion" prefWidth="75.0" text="Posición" />
+                            <TableColumn fx:id="clmTitulo" prefWidth="327.0" text="Título" />
+                              <TableColumn fx:id="clmPuntaje" prefWidth="89.0" text="Puntaje" />
+                              <TableColumn fx:id="clmPagina" prefWidth="88.0" text="Página" />
+                          </columns>
+                           <GridPane.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </GridPane.margin>
+                        </TableView>
                      </children>
                   </GridPane>
             </content>

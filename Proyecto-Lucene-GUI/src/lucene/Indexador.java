@@ -12,6 +12,7 @@ import org.apache.lucene.analysis.snowball.SnowballFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 
@@ -108,7 +109,7 @@ public class Indexador
 		return null;
 	}
 
-	public void indexarContenidos(String html) {
+	public void indexarContenidos(Html_Indexado html_idexado) {
 		try {
 			analizadores.leerStopWords();
 		}
@@ -120,26 +121,32 @@ public class Indexador
 		}
 		Document DocumentoLucene = new Document();
 
-		org.jsoup.nodes.Document Html = Jsoup.parse(html);
+		org.jsoup.nodes.Document Html = Jsoup.parse(html_idexado.getHTML());
 
 		String HTML;
+
+		IndexableField archivo = new TextField("archivo",html_idexado.getArchivo(),Field.Store.YES);
+		IndexableField posicionInicial = new IntPoint("posicionInicial",html_idexado.getLineaInicial());
+		IndexableField largoDocumento = new IntPoint("largoDocumento",html_idexado.getLargo());
 
 		// Se indexan primero los valores SIN STEMMING
 		// Se indexa el <title>
 		HTML = Html.getElementsByTag("title").text();
-		HTML = quitarStopWords("titulo",HTML);
-		HTML = analizadores.limpiarAcentos(HTML);
+		IndexableField tituloMostrar = new TextField("tituloMostrar",HTML,Field.Store.YES);
 
-		IndexableField title = null;
+		HTML = quitarStopWords("titulo",HTML);
+		HTML = analizadores.limpiarAcentos(HTML,false);
+
+		IndexableField tituloBuscar = null;
 		if (HTML != null)
-			title = new TextField("titulo",HTML,Field.Store.YES);
+			tituloBuscar = new TextField("tituloBuscar", HTML, Field.Store.YES);
 		else
 			System.out.println("El texto de los titulos esta vacio O.o");
 
 		// Se indexa las <a>
 		HTML = Html.getElementsByTag("a").text();
 		HTML = quitarStopWords("ref",HTML);
-		HTML = analizadores.limpiarAcentos(HTML);
+		HTML = analizadores.limpiarAcentos(HTML,false);
 		IndexableField links = null;
 		if (HTML != null)
 			links = new TextField("ref",HTML, Field.Store.YES);
@@ -150,7 +157,7 @@ public class Indexador
 		// Se indexa el body del html
 		HTML = Html.body().text();
 		HTML = sacarRaices("texto",HTML);
-		HTML = analizadores.limpiarAcentos(HTML);
+		HTML = analizadores.limpiarAcentos(HTML,false);
 		IndexableField body = new TextField("texto",HTML, Field.Store.YES);
 		// Se indexa los <h?>
 		StringBuilder encabezados = new StringBuilder();
@@ -163,11 +170,15 @@ public class Indexador
 
 		HTML = encabezados.toString();
 		HTML = sacarRaices("encab",HTML);
-		HTML = analizadores.limpiarAcentos(HTML);
+		HTML = analizadores.limpiarAcentos(HTML,false);
 		IndexableField headers = new TextField("encab",HTML, Field.Store.YES);
 
+		DocumentoLucene.add(archivo);
+		DocumentoLucene.add(posicionInicial);
+		DocumentoLucene.add(largoDocumento);
+		DocumentoLucene.add(tituloMostrar);
 		DocumentoLucene.add(links);
-		DocumentoLucene.add(title);
+		DocumentoLucene.add(tituloBuscar);
 		DocumentoLucene.add(headers);
 		DocumentoLucene.add(body);
 
