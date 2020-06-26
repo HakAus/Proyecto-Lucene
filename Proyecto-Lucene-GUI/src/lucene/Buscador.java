@@ -16,13 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Buscador {
-    public void buscarDocumento (String searchVal, int cantidadPorPagina)
+    public void buscarDocumento (String directorioIndice, String campo, String consulta, int cantidadPorPagina)
     {
         List<DocumentoEncontrado> retVal = new ArrayList<DocumentoEncontrado>();
 
         try
         {
-            Path directorioIndices = Paths.get(".","/indices");
+            Path directorioIndices = Paths.get(".",directorioIndice);
 
             String queries = "";
             IndexReader lector = DirectoryReader.open(FSDirectory.open(directorioIndices));
@@ -30,12 +30,10 @@ public class Buscador {
             Analizador analizador = new Analizador();
             analizador.leerStopWords();
 
-            BufferedReader in = null;
-            in = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-
-            QueryParser parser = new QueryParser("titulo",analizador);
-            Query q = parser.parse(searchVal);
-            System.out.println("Buscando : " + q.toString("titulo"));
+            QueryParser parser = new QueryParser(campo,analizador.analizadorSimple);
+            String consultaSinTildes = analizador.limpiarAcentos(consulta);
+            Query q = parser.parse(consultaSinTildes);
+            System.out.println("Buscando en: " + q.toString(campo));
 
             // Empieza la busqueda
             long inicio = System.currentTimeMillis();
@@ -55,8 +53,8 @@ public class Buscador {
             for (ScoreDoc hit : hits) {
                 System.out.println("doc="+hit.doc+" score="+hit.score);
                 Document doc = buscador.doc(hit.doc);
-                String titulo = doc.get("ref");
-                System.out.println("Referencias: " + titulo);
+                String titulo = doc.get("titulo");
+                System.out.println("Titulo: " + titulo);
             }
 
             long fin = System.currentTimeMillis();

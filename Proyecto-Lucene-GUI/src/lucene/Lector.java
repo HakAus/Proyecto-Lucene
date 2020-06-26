@@ -1,5 +1,8 @@
 package lucene;
 
+import javafx.scene.control.Alert;
+
+import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.nio.file.Path;
@@ -8,22 +11,22 @@ import java.util.ArrayList;
 
 public class Lector {
 
-    public ArrayList<ArrayList<String>> htmlsDeCadaArchivo;
+    public ArrayList<String> htmlsDeCadaArchivo;
 
-    public ArrayList<ArrayList<String>> obtenerDocumentos() throws IOException {
-        htmlsDeCadaArchivo = new ArrayList<ArrayList<String>>();
+    public ArrayList<String> obtenerDocumentos(String nombreDocumento) throws IOException {
+        htmlsDeCadaArchivo = new ArrayList<String>();
         ArrayList<String> documentosHtml = new ArrayList<String>();
         String separador = File.separator;
-        Path ruta = Paths.get(".", "/input/");
-        File carpeta = new File(ruta.toString());
-
-        if (carpeta.exists()) {
-            File[] files = carpeta.listFiles();
-            for (File file : files) {
-                if (file.isFile()){
-                    htmlsDeCadaArchivo.add(extraerHTML(file));
-                }
-            }
+        Path ruta = Paths.get(".", "/input/"+nombreDocumento);
+        File archivo = new File(ruta.toString());
+        if (archivo.exists())
+            htmlsDeCadaArchivo = extraerHTML(archivo);
+        else {
+            Alert alerta = new Alert(Alert.AlertType.ERROR);
+            alerta.setTitle("ERROR");
+            alerta.setHeaderText("No se encontro el documento");
+            alerta.setContentText("El archivo indicado no existe en la el directorio /input");
+            alerta.show();
         }
         return htmlsDeCadaArchivo;
     }

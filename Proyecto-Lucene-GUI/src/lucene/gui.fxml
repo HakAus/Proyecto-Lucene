@@ -15,7 +15,6 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-
 <StackPane fx:id="stkPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lucene.Controller">
    <children>
       <TabPane fx:id="tbpVentanas" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
@@ -53,7 +52,7 @@
                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                            </GridPane.margin>
                         </TextField>
-                        <Button fx:id="btnIndexar" mnemonicParsing="false" prefHeight="27.0" prefWidth="94.0" text="Indexar" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                        <Button fx:id="btnIndexar" mnemonicParsing="false" onAction="#indexar" prefHeight="27.0" prefWidth="94.0" text="Indexar" GridPane.columnIndex="2" GridPane.rowIndex="2">
                            <GridPane.margin>
                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                            </GridPane.margin>
@@ -63,8 +62,10 @@
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </GridPane.margin>
                         </RadioButton>
-                        <Label text="Estado:" GridPane.halignment="CENTER" GridPane.rowIndex="3" />
-                        <Label fx:id="lblEstadoIndexacion" prefHeight="40.0" prefWidth="333.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="3" />
+                        <Label fx:id="lblEstadoIndexacion" prefHeight="58.0" prefWidth="452.0" wrapText="true" GridPane.columnSpan="3" GridPane.halignment="CENTER" GridPane.rowIndex="3">
+                           <font>
+                              <Font name="Avenir Next Bold" size="16.0" />
+                           </font></Label>
                      </children>
                   </GridPane>
             </content>
@@ -104,12 +105,12 @@
                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                            </GridPane.margin>
                         </TextField>
-                        <Button fx:id="btnBuscar" mnemonicParsing="false" prefHeight="27.0" prefWidth="147.0" text="Buscar" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                        <Button fx:id="btnBuscar" mnemonicParsing="false" onAction="#buscar" prefHeight="27.0" prefWidth="147.0" text="Buscar" GridPane.columnIndex="2" GridPane.rowIndex="2">
                            <GridPane.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </GridPane.margin>
                         </Button>
-                        <ComboBox fx:id="cbxCampos" prefWidth="150.0" promptText="Campo" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <ComboBox fx:id="cbxCampos" onShown="#llenarComboBox" prefWidth="150.0" promptText="Campo" GridPane.columnIndex="2" GridPane.rowIndex="1">
                            <GridPane.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </GridPane.margin>

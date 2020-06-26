@@ -1,9 +1,6 @@
 package lucene;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.analysis.LowerCaseFilter;
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.snowball.SnowballFilter;
 import org.tartarus.snowball.ext.SpanishStemmer;
@@ -14,24 +11,62 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.ArrayList;
 
-public class Analizador extends Analyzer {
+public class Analizador {
 
-    // Atributos
     CharArraySet stopWords;
+    public Analyzer analizadorSimple, analizadorRemoverStopWords, analizadorConStemming;
+    public TokenFilter filtrarTildes;
 
-    // Metodos
-    @Override
-    protected TokenStreamComponents createComponents(String s) {
-        TokenizerEspanol tokenizerEspanol = new TokenizerEspanol();
-        // Se asignan los stopwords al analizador
-        TokenStream filtro = new LowerCaseFilter(tokenizerEspanol);
-        filtro = new StopFilter(filtro, stopWords);
-        // Se hace el stemming de acuerdo a la implementación Snowball del stemmer en español
-        SpanishStemmer stemmerEspanol = new SpanishStemmer();
-        filtro = new SnowballFilter(filtro, stemmerEspanol);
-        return new TokenStreamComponents(tokenizerEspanol, filtro);
+    Analizador() {
+        analizadorSimple = new Analyzer() {
+            @Override
+            protected TokenStreamComponents createComponents(String s) {
+                TokenizerEspanol tokenizerEspanol = new TokenizerEspanol();
+                TokenStream filtro = new LowerCaseFilter(tokenizerEspanol);
+                return new TokenStreamComponents(tokenizerEspanol,filtro);
+            }
+        };
+
+        analizadorRemoverStopWords = new Analyzer() {
+            @Override
+            protected TokenStreamComponents createComponents(String s) {
+                TokenizerEspanol tokenizerEspanol = new TokenizerEspanol();
+                TokenStream filtro = new LowerCaseFilter(tokenizerEspanol);
+                filtro = new StopFilter(filtro, stopWords);
+                return new TokenStreamComponents(tokenizerEspanol, filtro);
+            }
+        };
+
+        analizadorConStemming = new Analyzer() {
+            @Override
+            protected TokenStreamComponents createComponents(String s) {
+                TokenizerEspanol tokenizerEspanol = new TokenizerEspanol();
+                TokenStream filtro = new LowerCaseFilter(tokenizerEspanol);
+                // Se asignan los stopwords al analizador
+                filtro = new StopFilter(filtro, stopWords);
+                // Se hace el stemming de acuerdo a la implementación Snowball del stemmer en español
+                SpanishStemmer stemmerEspanol = new SpanishStemmer();
+                filtro = new SnowballFilter(filtro, stemmerEspanol);
+                return new TokenStreamComponents(tokenizerEspanol, filtro);
+            }
+        };
+    }
+
+    public String limpiarAcentos(String cadena) {
+        String limpio = null;
+        if (cadena !=null) {
+            String valor = cadena;
+            // Normalizar texto para eliminar acentos, dieresis, cedillas y tildes
+            limpio = Normalizer.normalize(valor, Normalizer.Form.NFD);
+            // Quitar caracteres no ASCII excepto la enie, interrogacion que abre, exclamacion que abre, grados, U con dieresis.
+            limpio = limpio.replaceAll("[^A-Za-z\\u0303 ]", "");
+            // Regresar a la forma compuesta, para poder comparar la enie con la tabla de valores
+            limpio = Normalizer.normalize(limpio, Normalizer.Form.NFC);
+        }
+        return limpio;
     }
 
     public void leerStopWords() throws IOException {
