@@ -121,7 +121,7 @@ public class Controller {
     }
 
     public void testHtml(ActionEvent actionEvent){
-        File htmlFile = new File("/Users/austinedwardhakansonhidalgo/Desktop/test.html");
+        File htmlFile = new File("R:/Proyecto-Lucene/Proyecto-Lucene-GUI/htmls/Tancredo de Rohan - Wikipedia, la enciclopedia libre.html");
         try {
             Desktop.getDesktop().browse(htmlFile.toURI());
         }

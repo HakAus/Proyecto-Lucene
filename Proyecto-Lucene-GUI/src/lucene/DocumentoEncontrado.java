@@ -66,17 +66,18 @@ public class DocumentoEncontrado {
             escritor.close();
 
             // Abre el html en el navegador
-            String ubicacion = ficheroHTML.toUri().toString().replace(" ", "%20");
-            URI uri = new URI(ubicacion);
+            String ubicacion = ficheroHTML.toAbsolutePath().toString();
+            ubicacion = ubicacion.replace(".\\", "\\");
             File htmlFile = new File(ubicacion);
+
             try {
-                Desktop.getDesktop().browse(ficheroHTML.toUri());
+                Desktop.getDesktop().browse(htmlFile.toURI());
             }
             catch (IOException e){
                 System.out.println("Hubo un problema al cargar la pagina web");
             }
         }
-        catch (IOException | URISyntaxException e) {
+        catch (IOException  e) {
             System.out.println("Hubo un error al extraer el html de la coleccion");
         }
     }
