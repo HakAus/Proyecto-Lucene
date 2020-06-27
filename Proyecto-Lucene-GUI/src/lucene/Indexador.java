@@ -126,15 +126,15 @@ public class Indexador
 		String HTML;
 
 		IndexableField archivo = new TextField("archivo",html_idexado.getArchivo(),Field.Store.YES);
-		IndexableField posicionInicial = new IntPoint("posicionInicial",html_idexado.getLineaInicial());
-		IndexableField largoDocumento = new IntPoint("largoDocumento",html_idexado.getLargo());
+		IndexableField posicionInicial = new TextField("posicionInicial",String.valueOf(html_idexado.getLineaInicial()), Field.Store.YES);
+		IndexableField largoDocumento = new TextField("largoDocumento",String.valueOf(html_idexado.getLargo()), Field.Store.YES);
 
 		// Se indexan primero los valores SIN STEMMING
 		// Se indexa el <title>
 		HTML = Html.getElementsByTag("title").text();
 		IndexableField tituloMostrar = new TextField("tituloMostrar",HTML,Field.Store.YES);
 
-		HTML = quitarStopWords("titulo",HTML);
+		HTML = quitarStopWords("tituloBuscar",HTML);
 		HTML = analizadores.limpiarAcentos(HTML,false);
 
 		IndexableField tituloBuscar = null;
@@ -158,6 +158,7 @@ public class Indexador
 		HTML = Html.body().text();
 		HTML = sacarRaices("texto",HTML);
 		HTML = analizadores.limpiarAcentos(HTML,false);
+		System.out.println("El body a guardar es: " + HTML);
 		IndexableField body = new TextField("texto",HTML, Field.Store.YES);
 		// Se indexa los <h?>
 		StringBuilder encabezados = new StringBuilder();

@@ -1,5 +1,6 @@
 package lucene;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -25,17 +26,27 @@ public class Buscador {
         try {
             Path directorioIndices = Paths.get(".", directorioIndice);
 
-            String queries = "";
             IndexReader lector = DirectoryReader.open(FSDirectory.open(directorioIndices));
             IndexSearcher buscador = new IndexSearcher(lector);
             Analizador analizador = new Analizador();
             analizador.leerStopWords();
 
-            if (campoSeleccionado.equals("titulo"))
-                campoSeleccionado = campoSeleccionado+"Buscar";
-            QueryParser parser = new QueryParser(campoSeleccionado, analizador.analizadorSimple);
+            Analyzer analizadorSeleccionado = null;
+            if (campoSeleccionado.equals("titulo")) {
+                campoSeleccionado = campoSeleccionado + "Buscar";
+                analizadorSeleccionado = analizador.analizadorRemoverStopWords;
+            }
+            else if (campoSeleccionado.equals("ref"))
+                analizadorSeleccionado = analizador.analizadorRemoverStopWords;
+            else
+                analizadorSeleccionado = analizador.analizadorConStemming;
+
+            System.out.println("Se va a buscar en el campo: " + campoSeleccionado);
+
+            QueryParser parser = new QueryParser(campoSeleccionado, analizadorSeleccionado);
             String consultaSinTildes = analizador.limpiarAcentos(consulta, true);
             Query q = parser.parse(consultaSinTildes);
+            System.out.println("El querie es el siguiente: " + q);
             System.out.println("Buscando en: " + q.toString(campoSeleccionado));
 
             // Empieza la busqueda

@@ -49,6 +49,7 @@ public class Lector {
                 } else if (linea.equals("</html>")) {
                     documentoIniciado = false;
                     largo = contador - posicionInicial;
+                    System.out.println("Largo del documento: " + largo);
                     Html_Indexado html_indexado = new Html_Indexado(
                                                         archivo.toString(),
                                                         nuevoDocumento.toString(),

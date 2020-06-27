@@ -16,13 +16,13 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="stkPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lucene.Controller">
+<StackPane fx:id="stkPane" prefHeight="700.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lucene.Controller">
    <children>
       <TabPane fx:id="tbpVentanas" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab fx:id="tabIndexacion" text="Indexar">
             <content>
-                  <GridPane fx:id="grdIndexacion" prefHeight="650.0" prefWidth="500.0">
+                  <GridPane fx:id="grdIndexacion">
                     <columnConstraints>
                       <ColumnConstraints hgrow="SOMETIMES" maxWidth="204.0" minWidth="10.0" prefWidth="158.0" />
                       <ColumnConstraints hgrow="SOMETIMES" maxWidth="280.0" minWidth="10.0" prefWidth="182.0" />
@@ -73,7 +73,7 @@
           </Tab>
           <Tab fx:id="tabBusqueda" text="Buscar">
             <content>
-                  <GridPane fx:id="grdBusqueda" prefHeight="650.0" prefWidth="600.0">
+                  <GridPane fx:id="grdBusqueda">
                      <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="204.0" minWidth="10.0" prefWidth="158.0" />
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="280.0" minWidth="10.0" prefWidth="169.0" />
@@ -118,7 +118,7 @@
                         </ComboBox>
                         <Button fx:id="btnVerMas" mnemonicParsing="false" text="Ver más" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="5" />
                         <Button fx:id="btnHTML" mnemonicParsing="false" onAction="#testHtml" text="Test html" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="CENTER" />
-                        <TableView fx:id="tblEscalafon" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="3" GridPane.rowSpan="2">
+                        <TableView fx:id="tblEscalafon" GridPane.columnSpan="3" GridPane.rowIndex="3" GridPane.rowSpan="2">
                           <columns>
                             <TableColumn fx:id="clmPosicion" prefWidth="75.0" text="Posición" />
                             <TableColumn fx:id="clmTitulo" prefWidth="327.0" text="Título" />

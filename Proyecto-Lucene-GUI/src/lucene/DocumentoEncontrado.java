@@ -1,13 +1,17 @@
 package lucene;
 
 import javafx.scene.control.Button;
+import javafx.scene.input.MouseEvent;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.EventHandler;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
@@ -29,37 +33,50 @@ public class DocumentoEncontrado {
         tituloBuscar = tituloMostrar = encabezados = referencias = texto = archivo = null;
         posicion = null;
         btnPagina = new Button("Mostrar");
+        btnPagina.addEventHandler(
+                MouseEvent.MOUSE_PRESSED,
+                (e) -> abrirPagina()
+        );
         puntaje = null;
         posicionInicialDocumento = largoDocumento = 0;
     }
 
-    public void abrirPagina(ActionEvent actionEvent) {
+
+    public void abrirPagina() {
         StringBuilder paginaWeb = new StringBuilder();
         String restante;
 
         // Lee el documento HTML de la coleccion a la que pertenece
-        try (Stream<String> lines = Files.lines(Paths.get(archivo))) {
-            restante = lines.skip(posicionInicialDocumento).findFirst().get();
-            String[] lineas = restante.split("\n");
-            for (int i = 0; i < largoDocumento; i++) {
-                paginaWeb.append(lineas[i]);
+        try (BufferedReader buffer = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            for (int i = 0; i < posicionInicialDocumento; i++) {
+                buffer.readLine();
+            }
+            for (int i = 0; i < largoDocumento; i++){
+                linea = buffer.readLine();
+                paginaWeb.append(linea);
             }
 
             System.out.println("PAGINA EXTRAIDA: " + paginaWeb.toString());
             // Crea el archivo del nuevo HTML
-            BufferedWriter escritor = new BufferedWriter(new FileWriter("./htmls/HTML-"+tituloMostrar));
+            Path ficheroHTML = Paths.get(".","/htmls/"+tituloMostrar+".html");
+            FileWriter fileWriter = new FileWriter(ficheroHTML.toString());
+            BufferedWriter escritor = new BufferedWriter(fileWriter);
             escritor.write(paginaWeb.toString());
+            escritor.close();
 
             // Abre el html en el navegador
-            File htmlFile = new File("./htmls/HTML-"+tituloMostrar);
+            String ubicacion = ficheroHTML.toUri().toString().replace(" ", "%20");
+            URI uri = new URI(ubicacion);
+            File htmlFile = new File(ubicacion);
             try {
-                Desktop.getDesktop().browse(htmlFile.toURI());
+                Desktop.getDesktop().browse(ficheroHTML.toUri());
             }
             catch (IOException e){
                 System.out.println("Hubo un problema al cargar la pagina web");
             }
         }
-        catch (IOException e) {
+        catch (IOException | URISyntaxException e) {
             System.out.println("Hubo un error al extraer el html de la coleccion");
         }
     }

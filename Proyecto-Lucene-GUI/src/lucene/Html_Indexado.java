@@ -16,6 +16,7 @@ public class Html_Indexado {
     public String getHTML(){
         return html;
     }
+
     public int getLineaInicial() {
         return lineaInicial;
     }
