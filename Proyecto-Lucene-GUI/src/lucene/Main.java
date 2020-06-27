@@ -12,7 +12,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         StackPane root = FXMLLoader.load(getClass().getResource("gui.fxml"));
         primaryStage.setTitle("Progra II RIT");
-        primaryStage.setScene(new Scene(root, 500, 400));
+        primaryStage.setScene(new Scene(root));
         primaryStage.show();
     }
 
