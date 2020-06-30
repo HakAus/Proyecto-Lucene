@@ -22,11 +22,16 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-# carpeta de datos de prueba
-/input
-
 # archivos de configuracion de intellij
 *.idea/*
 
 # cosas de macOS
 .DS_Store
+
+# carpetas y archivos del proyecto
+/input
+/htmls
+/librerias
+stop_words
+
+

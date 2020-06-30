@@ -4,6 +4,9 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.sun.javafx.css.parser.Token;
 import javafx.scene.control.Alert;
@@ -27,16 +30,18 @@ import org.tartarus.snowball.ext.SpanishStemmer;
 public class Indexador
 {
 	Analizador analizadores;
-	public IndexWriter writer;
-	CharArraySet stopWords;
+	IndexWriter writer;
 	ArrayList<String> bodies, referencias, titulos, encabezados;
+	Alert msgError = new Alert(Alert.AlertType.ERROR);
+	Alert msgAlerta = new Alert(Alert.AlertType.WARNING);
 
-	public Indexador() {
+
+	public Indexador(Analizador _analizadores) {
         bodies = new ArrayList<String>();
         referencias = new ArrayList<String>();
         titulos = new ArrayList<String>();
         encabezados = new ArrayList<String>();
-        analizadores = new Analizador();
+        analizadores = _analizadores;
 	}
 
 	private static String obtenerTokens(TokenStream stream) throws IOException
@@ -64,11 +69,11 @@ public class Indexador
 	}
 
 	public void configurarIndexador(String directorioIndices, boolean actualizar) throws IOException {
-		Analizador analizador = new Analizador();
-		analizador.leerStopWords();
+		analizadores = new Analizador();
+		analizadores.leerStopWords("stop_words");
 		Path rutaDirectorioIndice = Paths.get(".",directorioIndices);
 		Directory directorioIndice = FSDirectory.open(rutaDirectorioIndice);
-		IndexWriterConfig configuracionIndice = new IndexWriterConfig(analizador.analizadorSimple);
+		IndexWriterConfig configuracionIndice = new IndexWriterConfig(analizadores.analizadorSimple);
 		if (actualizar)
 			configuracionIndice.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 		else
@@ -77,7 +82,10 @@ public class Indexador
 			writer = new IndexWriter(directorioIndice, configuracionIndice);
 		}
 		catch (IOException e){
-			System.out.println("Hubo un problema al configurar el indexador jaja");
+			msgError.setTitle("ERROR");
+			msgError.setHeaderText("Hubo un problema al configurar el indexador");
+			msgError.setContentText("Revise que el archivo de stop words es correxto y que el directorio del índice es correcto");
+			msgError.show();
 		}
 	}
 
@@ -87,10 +95,9 @@ public class Indexador
 			return obtenerTokens(streamTextoConRaices);
 		}
 		catch (IOException e){
-			Alert alerta = new Alert(Alert.AlertType.ERROR);
-			alerta.setTitle("ERROR");
-			alerta.setHeaderText("No se pudo hacer el stemming");
-			alerta.show();
+			msgError.setTitle("ERROR");
+			msgError.setHeaderText("No se pudo hacer el stemming");
+			msgError.show();
 		}
 		return null;
 	}
@@ -101,35 +108,34 @@ public class Indexador
 			return obtenerTokens(streamTextoSinStopWords);
 		}
 		catch (IOException e){
-			Alert alerta = new Alert(Alert.AlertType.ERROR);
-			alerta.setTitle("ERROR");
-			alerta.setHeaderText("Hubo una error al remover los stop words de " + campo);
-			alerta.show();
+			msgError.setTitle("ERROR");
+			msgError.setHeaderText("Hubo una error al remover los stop words de " + campo);
+			msgError.show();
 		}
 		return null;
 	}
 
-	public void indexarContenidos(Html_Indexado html_idexado) {
-		try {
-			analizadores.leerStopWords();
-		}
-		catch(IOException e) {
-			Alert alerta = new Alert(Alert.AlertType.ERROR);
-			alerta.setTitle("ERROR");
-			alerta.setHeaderText("Hubo una error al intentar leer los stop words");
-			alerta.show();
-		}
+	public IndexableField crearCampoTexto(String nombre, String html, boolean guardarEnIndice){
+		if (guardarEnIndice)
+			 return new TextField(nombre, html, Field.Store.YES);
+		else
+			return new TextField(nombre, html, Field.Store.NO);
+	}
+
+	public void indexarContenidos(Html_Indexado html_indexado) {
+
 		Document DocumentoLucene = new Document();
 
-		org.jsoup.nodes.Document Html = Jsoup.parse(html_idexado.getHTML());
+		org.jsoup.nodes.Document Html = Jsoup.parse(html_indexado.getHTML());
+
+		IndexableField nombreArchivo = new TextField("archivo",html_indexado.getArchivo(),Field.Store.YES);
+		IndexableField posicionInicial = new TextField("posicionInicial",String.valueOf(html_indexado.getLineaInicial()), Field.Store.YES);
+		IndexableField largoDocumento = new TextField("largoDocumento",String.valueOf(html_indexado.getLargo()), Field.Store.YES);
 
 		String HTML;
 
-		IndexableField archivo = new TextField("archivo",html_idexado.getArchivo(),Field.Store.YES);
-		IndexableField posicionInicial = new TextField("posicionInicial",String.valueOf(html_idexado.getLineaInicial()), Field.Store.YES);
-		IndexableField largoDocumento = new TextField("largoDocumento",String.valueOf(html_idexado.getLargo()), Field.Store.YES);
-
 		// Se indexan primero los valores SIN STEMMING
+
 		// Se indexa el <title>
 		HTML = Html.getElementsByTag("title").text();
 		IndexableField tituloMostrar = new TextField("tituloMostrar",HTML,Field.Store.YES);
@@ -140,8 +146,11 @@ public class Indexador
 		IndexableField tituloBuscar = null;
 		if (HTML != null)
 			tituloBuscar = new TextField("tituloBuscar", HTML, Field.Store.YES);
-		else
-			System.out.println("El texto de los titulos esta vacio O.o");
+		else {
+			msgAlerta.setTitle("ALERTA");
+			msgAlerta.setHeaderText("La pagina " + html_indexado.archivo + "tiene un titulo vacio");
+			msgAlerta.show();
+		}
 
 		// Se indexa las <a>
 		HTML = Html.getElementsByTag("a").text();
@@ -150,16 +159,19 @@ public class Indexador
 		IndexableField links = null;
 		if (HTML != null)
 			links = new TextField("ref",HTML, Field.Store.YES);
-		else
-			System.out.println("El texto de las referencias esta vacio O.o");
+		else {
+			msgAlerta.setTitle("ALERTA");
+			msgAlerta.setHeaderText("La pagina " + html_indexado.archivo + " no tiene referencias");
+		}
 
 		// Se indexan los campos CON STEMMING
-		// Se indexa el body del html
+
+		// Se indexa el <body>
 		HTML = Html.body().text();
 		HTML = sacarRaices("texto",HTML);
 		HTML = analizadores.limpiarAcentos(HTML,false);
-		System.out.println("El body a guardar es: " + HTML);
 		IndexableField body = new TextField("texto",HTML, Field.Store.YES);
+
 		// Se indexa los <h?>
 		StringBuilder encabezados = new StringBuilder();
 		encabezados.append(Html.getElementsByTag("h1").text());
@@ -174,7 +186,7 @@ public class Indexador
 		HTML = analizadores.limpiarAcentos(HTML,false);
 		IndexableField headers = new TextField("encab",HTML, Field.Store.YES);
 
-		DocumentoLucene.add(archivo);
+		DocumentoLucene.add(nombreArchivo);
 		DocumentoLucene.add(posicionInicial);
 		DocumentoLucene.add(largoDocumento);
 		DocumentoLucene.add(tituloMostrar);
@@ -187,7 +199,9 @@ public class Indexador
 			writer.addDocument(DocumentoLucene);
 		}
 		catch (IOException e) {
-			System.out.println("Hubo un error en la indexacion");
+			msgError.setTitle("ERROR");
+			msgError.setHeaderText("Hubo un error en la indexacion");
+			msgError.setContentText("Revise que las rutas a la carpeta de indexacion y stop words son correctas");
 		}
 	}
 }

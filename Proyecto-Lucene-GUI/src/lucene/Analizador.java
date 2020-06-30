@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class Analizador {
 
-    CharArraySet stopWords;
+    public static CharArraySet stopWords;
     public Analyzer analizadorSimple, analizadorRemoverStopWords, analizadorConStemming;
     public TokenFilter filtrarTildes;
 
@@ -73,9 +73,16 @@ public class Analizador {
         return limpio;
     }
 
-    public void leerStopWords() throws IOException {
+
+    /*
+        Entrada: Nombre del archivo de texto que contiene la lista de stopwords separadas por lineas.
+        Resultado: Carga los stop words que utiliza analizadorRemoverStopWords y analizadorConStemming
+                   para ignorar las palabras comunes de un texto
+        Excepciones: Si hay un problema en la lectura se manda una excepción
+     */
+    public void leerStopWords(String nombreArchivo) throws IOException {
         ArrayList<String> listaStopWords = new ArrayList<String>();
-        Path ubicacionStopWords = Paths.get(".","stop_words");
+        Path ubicacionStopWords = Paths.get(".",nombreArchivo);
         File archivoStopWords = new File(ubicacionStopWords.toString());
         try (BufferedReader lector = new BufferedReader(new FileReader(archivoStopWords))) {
             String stopWord;

@@ -2,6 +2,8 @@ package lucene;
 
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +15,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.stream.Stream;
 
 public class DocumentoEncontrado {
@@ -32,15 +35,28 @@ public class DocumentoEncontrado {
     DocumentoEncontrado() {
         tituloBuscar = tituloMostrar = encabezados = referencias = texto = archivo = null;
         posicion = null;
+        puntaje = null;
         btnPagina = new Button("Mostrar");
         btnPagina.addEventHandler(
                 MouseEvent.MOUSE_PRESSED,
                 (e) -> abrirPagina()
         );
-        puntaje = null;
         posicionInicialDocumento = largoDocumento = 0;
     }
 
+
+    public String limpiarAcentos(String cadena) {
+        String limpio = null;
+        if (cadena !=null) {
+            // Normalizar texto para eliminar acentos, dieresis, cedillas y tildes
+            limpio = Normalizer.normalize(cadena, Normalizer.Form.NFD);
+            // Quitar caracteres no ASCII excepto la enie, interrogacion que abre, exclamacion que abre, grados, U con dieresis.
+            limpio = limpio.replaceAll("[^A-Za-z\\u0303\\-+&|!(){}\\[\\]^\"~*?: ]", "");
+            // Regresar a la forma compuesta, para poder comparar la enie con la tabla de valores
+            limpio = Normalizer.normalize(limpio, Normalizer.Form.NFC);
+        }
+        return limpio;
+    }
 
     public void abrirPagina() {
         StringBuilder paginaWeb = new StringBuilder();
@@ -57,9 +73,10 @@ public class DocumentoEncontrado {
                 paginaWeb.append(linea);
             }
 
-            System.out.println("PAGINA EXTRAIDA: " + paginaWeb.toString());
             // Crea el archivo del nuevo HTML
-            Path ficheroHTML = Paths.get(".","/htmls/"+tituloMostrar+".html");
+            String tituloMostrarLimpio = tituloMostrar.replace("/","");
+            tituloMostrarLimpio = limpiarAcentos(tituloMostrarLimpio);
+            Path ficheroHTML = Paths.get(".","/htmls/"+tituloMostrarLimpio+".html");
             FileWriter fileWriter = new FileWriter(ficheroHTML.toString());
             BufferedWriter escritor = new BufferedWriter(fileWriter);
             escritor.write(paginaWeb.toString());
@@ -79,6 +96,44 @@ public class DocumentoEncontrado {
         }
         catch (IOException  e) {
             System.out.println("Hubo un error al extraer el html de la coleccion");
+        }
+    }
+
+    public void llenarDatos(int _posicion, float _puntaje, Document doc){
+
+        setPosicion(_posicion);
+        setPuntaje(_puntaje);
+        IndexableField campo = doc.getField("tituloBuscar");
+        if (campo != null) {
+            setTituloBuscar(campo.stringValue());
+        }
+        campo = doc.getField("archivo");
+        if (campo != null) {
+            setArchivo(campo.stringValue());
+        }
+        campo = doc.getField("posicionInicial");
+        if (campo != null) {
+            setPosicionInicialDocumento(Integer.parseInt(campo.stringValue()));
+        }
+        campo = doc.getField("largoDocumento");
+        if (campo != null) {
+            setLargoDocumento(Integer.parseInt(campo.stringValue()));
+        }
+        campo = doc.getField("tituloMostrar");
+        if (campo != null) {
+            setTituloMostrar(campo.stringValue());
+        }
+        campo = doc.getField("ref");
+        if (campo != null) {
+            setReferencias(campo.stringValue());
+        }
+        campo = doc.getField("encab");
+        if (campo != null) {
+            setEncabezados(campo.stringValue());
+        }
+        campo = doc.getField("texto");
+        if (campo != null) {
+            setTexto(campo.stringValue());
         }
     }
     public String getTituloMostrar() {

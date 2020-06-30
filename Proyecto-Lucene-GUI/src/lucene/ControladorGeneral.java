@@ -15,11 +15,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class Controller {
+public class ControladorGeneral implements Controlador {
 
 
-
-    // JAVAFX
+    // Variables JAVAFX
     @FXML private StackPane stkPane;
     @FXML private TabPane tbpVentanas;
     @FXML private Tab tabIndexacion, tabBusqueda;
@@ -33,16 +32,37 @@ public class Controller {
                       tfdConsulta;
     @FXML private Button btnIndexar, btnBuscar,btnVerMas;
     @FXML private RadioButton rdbActualizar;
-    @FXML private Label lblEstadoIndexacion;
+    @FXML private Label lblEstadoIndexacion, lblDocumentosEncontrados, lblDocumentosRestantes, lblTiempoConsulta;
     @FXML private ComboBox<String> cbxCampos;
 
-    // LUCENE
-    Lector lector = new Lector();
-    Indexador indexador = new Indexador();
-    Buscador buscador = new Buscador();
+    // Variables LUCENE
+    Lector lector;
+    Indexador indexador;
+    Buscador buscador;
+
+    // Otras variables
     Alert alerta = new Alert(Alert.AlertType.WARNING,"");
     ArrayList<Html_Indexado> archivos;
 
+    @Override
+    public void prepararVentana() {
+        llenarComboBox();
+        configurarTabla();
+        Analizador analizadores = new Analizador();
+        try {
+            analizadores.leerStopWords("stop_words");
+
+        }
+        catch (IOException e){
+            alerta.setTitle("ERROR");
+            alerta.setHeaderText("Hubo un problema al cargar el archivo de stop words");
+            alerta.setContentText("Revise que el nombre de archivo especificado es correcto.");
+            alerta.show();
+        }
+        lector = new Lector();
+        indexador = new Indexador(analizadores);
+        buscador = new Buscador(analizadores, lblDocumentosEncontrados, lblTiempoConsulta);
+    }
 
     public void llenarComboBox(){
         if (cbxCampos.getItems().size() == 0)
@@ -60,9 +80,16 @@ public class Controller {
     public void limpiarTabla(){
         tblEscalafon.getItems().clear();
     }
+
     public boolean validarCamposIndexacion(){
         return !tfdArchivoIndexar.getText().equals("")
                 && !tfdDirectorioIndexacion.getText().equals("");
+    }
+
+    public boolean validarCamposBusqueda(){
+        return !tfdDirectorioIndice.getText().equals("") &&
+                !cbxCampos.getSelectionModel().getSelectedItem().equals("") &&
+                !tfdConsulta.getText().equals("");
     }
 
     public void indexar(ActionEvent actionEvent) {
@@ -72,56 +99,58 @@ public class Controller {
             }
             catch (IOException e){
                 alerta.setTitle("ERROR");
-                alerta.setHeaderText("Hubo un error al leer la coleccion de documentos");
+                alerta.setHeaderText("Hubo un error al leer la colección de documentos");
                 alerta.show();
             }
             try {
                 lblEstadoIndexacion.setText("Indexando ...");
                 long inicio = System.currentTimeMillis();
                 indexador.configurarIndexador(tfdDirectorioIndexacion.getText(),rdbActualizar.isSelected());
-                int cont = 0;
+                int contador = 0;
                 for (Html_Indexado html : archivos) {
                     indexador.indexarContenidos(html);
-                    cont++;
+                    contador++;
                 }
                 // Se cierra la escritura
                 indexador.writer.close();
                 long fin = System.currentTimeMillis();
                 double tiempo = (double) ((fin - inicio)/1000);
 
-                lblEstadoIndexacion.setText(cont + " documentos indexados de la coleccion "
+                lblEstadoIndexacion.setText(contador + " documentos indexados de la coleccion "
                                             + tfdArchivoIndexar.getText() + " en " + tiempo
                                             + " segundos");
             }
             catch (IOException e){
                 alerta.setTitle("ERROR");
-                alerta.setHeaderText("Hubo un error durante la indexacion");
+                alerta.setHeaderText("Hubo un error durante la indexación");
                 alerta.show();
             }
         }
         else {
-            alerta.setTitle("ERROR");
+            alerta.setTitle("ALERTA");
             alerta.setHeaderText("Alguno de los campos esta vacio");
             alerta.show();
         }
-
-
     }
 
     public void buscar(ActionEvent actionEvent){
-        configurarTabla();
         limpiarTabla();
-        ArrayList<DocumentoEncontrado> resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
-                                cbxCampos.getSelectionModel().getSelectedItem(),
-                                tfdConsulta.getText(),
-                                20);
-        for (DocumentoEncontrado doc : resultados){
-            tblEscalafon.getItems().add(doc);
+        if (validarCamposBusqueda()){
+            ArrayList<DocumentoEncontrado> resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
+                    cbxCampos.getSelectionModel().getSelectedItem(), tfdConsulta.getText(), 20);
+            for (DocumentoEncontrado doc : resultados){
+                tblEscalafon.getItems().add(doc);
+            }
+        }
+        else {
+            alerta.setTitle("ALERTA");
+            alerta.setHeaderText("Por favor, asegúrese de llenar todos los campos");
+            alerta.show();
         }
     }
 
     public void testHtml(ActionEvent actionEvent){
-        File htmlFile = new File("R:/Proyecto-Lucene/Proyecto-Lucene-GUI/htmls/Tancredo de Rohan - Wikipedia, la enciclopedia libre.html");
+        File htmlFile = new File("test");
         try {
             Desktop.getDesktop().browse(htmlFile.toURI());
         }
