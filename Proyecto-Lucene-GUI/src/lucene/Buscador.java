@@ -22,8 +22,10 @@ public class Buscador {
     IndexSearcher buscador;
     Analizador analizadores;
     Alert msgError, msgAlerta;
-    ArrayList<DocumentoEncontrado> documentoEncontrados;
+    ArrayList<ArrayList<DocumentoEncontrado>> documentosEncontrados;
     Label lblDocumentosEncontrados, lblTiempoConsulta;
+    int cantidadPaginas;
+    int paginaActual;
 
     Buscador (Analizador _analizadores, Label _lblDocumentosEncontrados, Label _lblTiempoConsulta) {
         msgError = new Alert(Alert.AlertType.ERROR);
@@ -71,22 +73,30 @@ public class Buscador {
 
         try {
             TopDocs resultados = buscador.search(consulta, cantidadPorPagina);
-            ScoreDoc[] documentosEncontrados = resultados.scoreDocs;
+            ScoreDoc[] docResultados = resultados.scoreDocs;
+
             numeroResultados = Math.toIntExact(resultados.totalHits.value);
+            cantidadPaginas = (int) Math.ceil((float) numeroResultados / (float) cantidadPorPagina);
+
             int posicion = 0;
             float puntaje = 0;
 
-            for (ScoreDoc scoreDoc : documentosEncontrados) {
-                puntaje = scoreDoc.score;
-                Document doc = buscador.doc(scoreDoc.doc);
-                DocumentoEncontrado documento = new DocumentoEncontrado();
-                if (doc != null) {
-                    posicion++;
-                    documento.llenarDatos(posicion, puntaje, doc);
+            for (int i = 0; i < cantidadPaginas; i++){
+                ArrayList<DocumentoEncontrado> lista = new ArrayList<>();
+                for (ScoreDoc scoreDoc : docResultados) {
+                    puntaje = scoreDoc.score;
+                    Document doc = buscador.doc(scoreDoc.doc);
+                    DocumentoEncontrado documento = new DocumentoEncontrado();
+                    if (doc != null) {
+                        posicion++;
+                        documento.llenarDatos(posicion, puntaje, doc);
+                    }
+                    lista.add(documento);
                 }
-                documentoEncontrados.add(documento);
+                documentosEncontrados.add(lista);
+                docResultados = buscador.searchAfter(docResultados[docResultados.length-1],consulta,cantidadPorPagina).scoreDocs;
             }
-
+            System.out.println("Tamano de la lista de listas: " + documentosEncontrados.size());
             long fin = System.currentTimeMillis();
             float tiempo = (float) ((fin - inicio))/1000;
             lblDocumentosEncontrados.setText(numeroResultados + " documentos encontrados.");
@@ -99,10 +109,10 @@ public class Buscador {
         }
     }
 
-    public ArrayList<DocumentoEncontrado> buscarDocumento (String directorioIndice, String campoSeleccionado,
+    public ArrayList<ArrayList<DocumentoEncontrado>> buscarDocumento (String directorioIndice, String campoSeleccionado,
                                                            String textoConsulta, int cantidadPorPagina) {
 
-        documentoEncontrados = new ArrayList<DocumentoEncontrado>();
+        documentosEncontrados = new ArrayList<ArrayList<DocumentoEncontrado>>();
 
         try {
             Path directorioIndices = Paths.get(".", directorioIndice);
@@ -122,6 +132,6 @@ public class Buscador {
             ejecutarConsulta(consulta,cantidadPorPagina);
         }
 
-        return documentoEncontrados;
+        return documentosEncontrados;
     }
 }

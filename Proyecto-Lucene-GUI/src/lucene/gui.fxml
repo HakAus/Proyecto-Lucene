@@ -154,7 +154,7 @@
                            <children>
                               <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                                  <children>
-                                    <Button mnemonicParsing="false" text="Anterior" textFill="WHITE">
+                                    <Button fx:id="btnAnterior" mnemonicParsing="false" onAction="#verAnterior" text="Anterior" textFill="WHITE">
                                        <font>
                                           <Font name="Nadeem Regular" size="12.0" />
                                        </font>
@@ -162,7 +162,7 @@
                                           <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                                        </HBox.margin>
                                     </Button>
-                                    <Button fx:id="btnVerMas" mnemonicParsing="false" text="Siguiente" textFill="WHITE" HBox.hgrow="ALWAYS">
+                                    <Button fx:id="btnSiguiente" mnemonicParsing="false" onAction="#verSiguiente" text="Siguiente" textFill="WHITE" HBox.hgrow="ALWAYS">
                                        <font>
                                           <Font name="Nadeem Regular" size="12.0" />
                                        </font>

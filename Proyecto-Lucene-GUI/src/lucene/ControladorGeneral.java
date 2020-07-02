@@ -2,15 +2,16 @@ package lucene;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.control.Button;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,10 +20,6 @@ public class ControladorGeneral implements Controlador {
 
 
     // Variables JAVAFX
-    @FXML private StackPane stkPane;
-    @FXML private TabPane tbpVentanas;
-    @FXML private Tab tabIndexacion, tabBusqueda;
-    @FXML private GridPane grdIndexacion, grdBusqueda;
     @FXML public TableView<DocumentoEncontrado> tblEscalafon;
     @FXML public TableColumn<String,DocumentoEncontrado> clmPosicion;
     @FXML public TableColumn<String,DocumentoEncontrado> clmTitulo;
@@ -30,7 +27,6 @@ public class ControladorGeneral implements Controlador {
     @FXML public TableColumn<String,DocumentoEncontrado> clmPuntaje;
     @FXML private TextField tfdDirectorioIndexacion, tfdArchivoIndexar, tfdDirectorioIndice,
                       tfdConsulta;
-    @FXML private Button btnIndexar, btnBuscar,btnVerMas;
     @FXML private RadioButton rdbActualizar;
     @FXML private Label lblEstadoIndexacion, lblDocumentosEncontrados, lblDocumentosRestantes, lblTiempoConsulta;
     @FXML private ComboBox<String> cbxCampos;
@@ -43,6 +39,8 @@ public class ControladorGeneral implements Controlador {
     // Otras variables
     Alert alerta = new Alert(Alert.AlertType.WARNING,"");
     ArrayList<Html_Indexado> archivos;
+    ArrayList<ArrayList<DocumentoEncontrado>> resultados;
+    int paginaActual = 0;
 
     @Override
     public void prepararVentana() {
@@ -51,7 +49,6 @@ public class ControladorGeneral implements Controlador {
         Analizador analizadores = new Analizador();
         try {
             analizadores.leerStopWords("stop_words");
-
         }
         catch (IOException e){
             alerta.setTitle("ERROR");
@@ -136,15 +133,45 @@ public class ControladorGeneral implements Controlador {
     public void buscar(ActionEvent actionEvent){
         limpiarTabla();
         if (validarCamposBusqueda()){
-            ArrayList<DocumentoEncontrado> resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
+            resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
                     cbxCampos.getSelectionModel().getSelectedItem(), tfdConsulta.getText(), 20);
-            for (DocumentoEncontrado doc : resultados){
+            paginaActual = 0;
+            for (DocumentoEncontrado doc : resultados.get(paginaActual)){
                 tblEscalafon.getItems().add(doc);
             }
         }
         else {
             alerta.setTitle("ALERTA");
             alerta.setHeaderText("Por favor, asegúrese de llenar todos los campos");
+            alerta.show();
+        }
+    }
+
+    public void verSiguiente(){
+        if (paginaActual+1 < resultados.size()) {
+            limpiarTabla();
+            for (DocumentoEncontrado doc : resultados.get(++paginaActual)){
+                tblEscalafon.getItems().add(doc);
+            }
+        }
+        else {
+            alerta.setTitle("Alerta");
+            alerta.setContentText("No hay mas resultados");
+            alerta.show();
+        }
+
+    }
+
+    public void verAnterior(){
+        if (paginaActual-1 >= 0) {
+            limpiarTabla();
+            for (DocumentoEncontrado doc : resultados.get(--paginaActual)){
+                tblEscalafon.getItems().add(doc);
+            }
+        }
+        else {
+            alerta.setTitle("Alerta");
+            alerta.setContentText("Esta en la primera página");
             alerta.show();
         }
     }
