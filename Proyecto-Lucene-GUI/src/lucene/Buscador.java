@@ -42,19 +42,20 @@ public class Buscador {
         Query consulta;
         Analyzer analizadorSeleccionado;
 
-        if (campoSeleccionado.equals("titulo")) {
-            campoSeleccionado = campoSeleccionado + "Buscar";
+        if (campoSeleccionado.equals("")) {
+            campoSeleccionado = "texto";
+            analizadorSeleccionado = analizadores.analizadorConStemming;
+        }
+        else if (campoSeleccionado.equals("titulo") || campoSeleccionado.equals("ref")){
             analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
         }
-        else if (campoSeleccionado.equals("ref"))
-            analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
         else
             analizadorSeleccionado = analizadores.analizadorConStemming;
-
         QueryParser parser = new QueryParser(campoSeleccionado, analizadorSeleccionado);
         String consultaSinTildes = analizadores.limpiarAcentos(textoConsulta, true);
         try {
             consulta = parser.parse(consultaSinTildes);
+            System.out.println("consulta:" + consulta);
             return consulta;
         }
         catch (ParseException e){

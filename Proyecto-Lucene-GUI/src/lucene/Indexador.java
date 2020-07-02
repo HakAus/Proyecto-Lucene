@@ -140,12 +140,12 @@ public class Indexador
 		HTML = Html.getElementsByTag("title").text();
 		IndexableField tituloMostrar = new TextField("tituloMostrar",HTML,Field.Store.YES);
 
-		HTML = quitarStopWords("tituloBuscar",HTML);
+		HTML = quitarStopWords("titulo",HTML);
 		HTML = analizadores.limpiarAcentos(HTML,false);
 
 		IndexableField tituloBuscar = null;
 		if (HTML != null)
-			tituloBuscar = new TextField("tituloBuscar", HTML, Field.Store.YES);
+			tituloBuscar = new TextField("titulo", HTML, Field.Store.YES);
 		else {
 			msgAlerta.setTitle("ALERTA");
 			msgAlerta.setHeaderText("La pagina " + html_indexado.archivo + "tiene un titulo vacio");
@@ -174,12 +174,12 @@ public class Indexador
 
 		// Se indexa los <h?>
 		StringBuilder encabezados = new StringBuilder();
-		encabezados.append(Html.getElementsByTag("h1").text());
-		encabezados.append(Html.getElementsByTag("h2").text());
-		encabezados.append(Html.getElementsByTag("h3").text());
-		encabezados.append(Html.getElementsByTag("h4").text());
-		encabezados.append(Html.getElementsByTag("h5").text());
-		encabezados.append(Html.getElementsByTag("h6").text());
+		encabezados.append(Html.getElementsByTag("h1").text()+" ");
+		encabezados.append(Html.getElementsByTag("h2").text()+" ");
+		encabezados.append(Html.getElementsByTag("h3").text()+" ");
+		encabezados.append(Html.getElementsByTag("h4").text()+" ");
+		encabezados.append(Html.getElementsByTag("h5").text()+" ");
+		encabezados.append(Html.getElementsByTag("h6").text()+" ");
 
 		HTML = encabezados.toString();
 		HTML = sacarRaices("encab",HTML);

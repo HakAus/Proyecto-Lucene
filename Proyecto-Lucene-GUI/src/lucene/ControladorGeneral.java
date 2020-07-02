@@ -62,8 +62,10 @@ public class ControladorGeneral implements Controlador {
     }
 
     public void llenarComboBox(){
-        if (cbxCampos.getItems().size() == 0)
-            cbxCampos.getItems().addAll("titulo","texto","encab","ref");
+        if (cbxCampos.getItems().size() == 0) {
+            cbxCampos.getItems().addAll("", "titulo", "texto", "encab", "ref");
+            cbxCampos.getSelectionModel().selectFirst();
+        }
     }
 
     public void configurarTabla(){
@@ -85,7 +87,6 @@ public class ControladorGeneral implements Controlador {
 
     public boolean validarCamposBusqueda(){
         return !tfdDirectorioIndice.getText().equals("") &&
-                !cbxCampos.getSelectionModel().getSelectedItem().equals("") &&
                 !tfdConsulta.getText().equals("");
     }
 
@@ -136,8 +137,10 @@ public class ControladorGeneral implements Controlador {
             resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
                     cbxCampos.getSelectionModel().getSelectedItem(), tfdConsulta.getText(), 20);
             paginaActual = 0;
-            for (DocumentoEncontrado doc : resultados.get(paginaActual)){
-                tblEscalafon.getItems().add(doc);
+            if (resultados.size() > 0){
+                for (DocumentoEncontrado doc : resultados.get(paginaActual)){
+                    tblEscalafon.getItems().add(doc);
+                }
             }
         }
         else {
