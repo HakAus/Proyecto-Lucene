@@ -3,10 +3,7 @@ package lucene;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.sun.javafx.css.parser.Token;
 import javafx.scene.control.Alert;
@@ -168,8 +165,31 @@ public class Indexador
 
 		// Se indexa el <body>
 		HTML = Html.body().text();
+
+		// Se sacan los primeros 100 caracteres para mostrar una vista previa del texto.
+		StringBuilder Palabra = new StringBuilder();
+		StringBuilder Resumen100 = new StringBuilder();
+		int numeroPalabras = 0;
+		int numChar = 0;
+		char[] charsHTML = HTML.toCharArray();
+		while (numChar < charsHTML.length && numeroPalabras < 100){
+			if (charsHTML[numChar] == ' '){
+				numeroPalabras++;
+				Resumen100.append(Palabra.toString());
+				Palabra.setLength(0);
+				Palabra.append(" ");
+			}
+			else {
+				Palabra.append(charsHTML[numChar]);
+			}
+			numChar++;
+		}
+
+		IndexableField resumen = new TextField("resumen",Resumen100.toString(),Field.Store.YES);
+		// Se quitan stopwords, aplica stemming y se limpian acentos para el texto completo.
 		HTML = sacarRaices("texto",HTML);
 		HTML = analizadores.limpiarAcentos(HTML,false);
+//		System.out.println("VERSION COMPLETA: " + HTML + "  Tamaño: " + HTML.length());
 		IndexableField body = new TextField("texto",HTML, Field.Store.YES);
 
 		// Se indexa los <h?>
@@ -194,6 +214,7 @@ public class Indexador
 		DocumentoLucene.add(tituloBuscar);
 		DocumentoLucene.add(headers);
 		DocumentoLucene.add(body);
+		DocumentoLucene.add(resumen);
 
 		try {
 			writer.addDocument(DocumentoLucene);

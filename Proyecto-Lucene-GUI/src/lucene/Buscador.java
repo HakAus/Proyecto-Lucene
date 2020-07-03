@@ -3,6 +3,8 @@ package lucene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -15,6 +17,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Buscador {
     // Variables
@@ -26,6 +31,7 @@ public class Buscador {
     Label lblDocumentosEncontrados, lblTiempoConsulta;
     int cantidadPaginas;
     int paginaActual;
+    Pattern patronConsulta;
 
     Buscador (Analizador _analizadores, Label _lblDocumentosEncontrados, Label _lblTiempoConsulta) {
         msgError = new Alert(Alert.AlertType.ERROR);
@@ -35,27 +41,99 @@ public class Buscador {
         analizadores = _analizadores;
         lblDocumentosEncontrados = _lblDocumentosEncontrados;
         lblTiempoConsulta = _lblTiempoConsulta;
+        patronConsulta = Pattern.compile("(?<titulo>titulo:)(?<vtitulo>[^ ]*)|(?<ref>ref:)(?<vref>[^ ]*)|(?<texto>texto:)(?<vtexto>[^ ]*)|(?<encab>encab:)(?<vencab>[^ ]*)");
     }
 
     // Metodos
-    public Query prepararConsulta(String campoSeleccionado, String textoConsulta) {
-        Query consulta;
-        Analyzer analizadorSeleccionado;
+    private static String tokensToString(TokenStream stream) throws IOException
+    {
+        StringBuilder tokens = new StringBuilder();
+        CharTermAttribute caracter = stream.addAttribute(CharTermAttribute.class);
+        stream.reset();
+        while (stream.incrementToken()) {
+            tokens.append(" ").append(caracter.toString()).append(" ");
+        }
+        stream.end();
+        stream.close();
+        return tokens.toString();
+    }
 
-        if (campoSeleccionado.equals("")) {
+    public String quitarStopWords(String campo, String texto){
+        try {
+            TokenStream streamTextoSinStopWords =  analizadores.analizadorRemoverStopWords.tokenStream(campo,texto);
+            return tokensToString(streamTextoSinStopWords);
+        }
+        catch (IOException e){
+            msgError.setTitle("ERROR");
+            msgError.setHeaderText("Hubo una error al remover los stop words de " + campo);
+            msgError.show();
+        }
+        return null;
+    }
+
+    public String sacarRaices(String campo, String texto) {
+        TokenStream streamTextoConRaices = analizadores.analizadorConStemming.tokenStream(campo,texto);
+        try {
+            return tokensToString(streamTextoConRaices);
+        }
+        catch (IOException e){
+            msgError.setTitle("ERROR");
+            msgError.setHeaderText("No se pudo hacer el stemming");
+            msgError.show();
+        }
+        return null;
+    }
+
+    public Query prepararConsulta(String campoSeleccionado, String textoConsulta, boolean personalidada) {
+        Query consulta;
+        Analyzer analizadorSeleccionado = null;
+
+        if (personalidada){
+            Matcher comparacion = patronConsulta.matcher(textoConsulta);
+            StringBuilder partesConsulta = new StringBuilder();
+            String cadenaFiltrada;
+            if (comparacion.group("titulo") != null) {
+                cadenaFiltrada = quitarStopWords("titulo",comparacion.group("vtitulo"));
+                partesConsulta.append(comparacion.group("titulo")).append(cadenaFiltrada + " ");
+                analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
+            }
+            if (comparacion.group("ref") != null) {
+                cadenaFiltrada = quitarStopWords("ref",comparacion.group("vref"));
+                partesConsulta.append(comparacion.group("ref")).append(cadenaFiltrada + " ");
+                analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
+            }
+            if (comparacion.group("texto") != null) {
+                cadenaFiltrada = quitarStopWords("texto",comparacion.group("vtexto"));
+                partesConsulta.append(comparacion.group("texto")).append(cadenaFiltrada + " ");
+                analizadorSeleccionado = analizadores.analizadorConStemming;
+            }
+            if (comparacion.group("encab") != null) {
+                cadenaFiltrada = quitarStopWords("encab",comparacion.group("vencab"));
+                partesConsulta.append(comparacion.group("encab")).append(cadenaFiltrada + " ");
+                analizadorSeleccionado = analizadores.analizadorConStemming;
+            }
             campoSeleccionado = "texto";
-            analizadorSeleccionado = analizadores.analizadorConStemming;
+            textoConsulta = partesConsulta.toString();
+            System.out.println("Consulta personalidada: " + textoConsulta);
         }
-        else if (campoSeleccionado.equals("titulo") || campoSeleccionado.equals("ref")){
-            analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
+        else {
+            if (campoSeleccionado.equals("")) {
+                campoSeleccionado = "texto";
+                analizadorSeleccionado = analizadores.analizadorConStemming;
+            }
+            else if (campoSeleccionado.equals("titulo") || campoSeleccionado.equals("ref")){
+                analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
+            }
+            else {
+                analizadorSeleccionado = analizadores.analizadorConStemming;
+            }
         }
-        else
-            analizadorSeleccionado = analizadores.analizadorConStemming;
         QueryParser parser = new QueryParser(campoSeleccionado, analizadorSeleccionado);
         String consultaSinTildes = analizadores.limpiarAcentos(textoConsulta, true);
         try {
+            System.out.println("consultaSinTildes:" + consultaSinTildes);
             consulta = parser.parse(consultaSinTildes);
-            System.out.println("consulta:" + consulta);
+            System.out.println("consulta despues de parsing:" + consulta);
             return consulta;
         }
         catch (ParseException e){
@@ -97,7 +175,6 @@ public class Buscador {
                 documentosEncontrados.add(lista);
                 docResultados = buscador.searchAfter(docResultados[docResultados.length-1],consulta,cantidadPorPagina).scoreDocs;
             }
-            System.out.println("Tamano de la lista de listas: " + documentosEncontrados.size());
             long fin = System.currentTimeMillis();
             float tiempo = (float) ((fin - inicio))/1000;
             lblDocumentosEncontrados.setText(numeroResultados + " documentos encontrados.");
@@ -111,7 +188,7 @@ public class Buscador {
     }
 
     public ArrayList<ArrayList<DocumentoEncontrado>> buscarDocumento (String directorioIndice, String campoSeleccionado,
-                                                           String textoConsulta, int cantidadPorPagina) {
+                                                           String textoConsulta, int cantidadPorPagina, boolean personalizada) {
 
         documentosEncontrados = new ArrayList<ArrayList<DocumentoEncontrado>>();
 
@@ -127,7 +204,7 @@ public class Buscador {
 
         buscador = new IndexSearcher(lector);
 
-        Query consulta = prepararConsulta(campoSeleccionado,textoConsulta);
+        Query consulta = prepararConsulta(campoSeleccionado,textoConsulta, personalizada);
 
         if (consulta != null){
             ejecutarConsulta(consulta,cantidadPorPagina);

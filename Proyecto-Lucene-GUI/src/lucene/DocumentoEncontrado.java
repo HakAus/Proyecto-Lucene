@@ -26,6 +26,7 @@ public class DocumentoEncontrado {
     public String encabezados;
     public String referencias;
     public String texto;
+    public String resumen;
     public String archivo;
     public Integer posicion;
     public Float puntaje;
@@ -33,7 +34,7 @@ public class DocumentoEncontrado {
     public int largoDocumento;
 
     DocumentoEncontrado() {
-        tituloBuscar = tituloMostrar = encabezados = referencias = texto = archivo = null;
+        tituloBuscar = tituloMostrar = encabezados = referencias = texto = resumen = archivo = null;
         posicion = null;
         puntaje = null;
         btnPagina = new Button("Mostrar");
@@ -135,6 +136,10 @@ public class DocumentoEncontrado {
         if (campo != null) {
             setTexto(campo.stringValue());
         }
+        campo = doc.getField("resumen");
+        if (campo != null) {
+            setResumen(campo.stringValue());
+        }
     }
     public String getTituloMostrar() {
         return tituloMostrar;
@@ -223,4 +228,13 @@ public class DocumentoEncontrado {
     public void setArchivo(String archivo) {
         this.archivo = archivo;
     }
+
+    public void setResumen(String resumen) {
+        this.resumen = resumen;
+    }
+
+    public String getResumen() {
+        return resumen;
+    }
+
 }

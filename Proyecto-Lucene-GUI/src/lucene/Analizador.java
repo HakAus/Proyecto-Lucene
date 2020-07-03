@@ -64,7 +64,7 @@ public class Analizador {
             limpio = Normalizer.normalize(valor, Normalizer.Form.NFD);
             // Quitar caracteres no ASCII excepto la enie, interrogacion que abre, exclamacion que abre, grados, U con dieresis.
             if (busqueda)
-                limpio = limpio.replaceAll("[^A-Za-z\\u0303\\-+&|!(){}\\[\\]^\"~*?: ]", "");
+                limpio = limpio.replaceAll("[^A-Za-z\\u0303\\-+&|!(){}\\[\\]^\"~*?: \\d]", "");
             else
                 limpio = limpio.replaceAll("[^A-Za-z\\u0303 ]", "");
             // Regresar a la forma compuesta, para poder comparar la enie con la tabla de valores

@@ -1,14 +1,15 @@
 package lucene;
 
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TextField;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.awt.Desktop;
@@ -27,8 +28,8 @@ public class ControladorGeneral implements Controlador {
     @FXML public TableColumn<String,DocumentoEncontrado> clmPuntaje;
     @FXML private TextField tfdDirectorioIndexacion, tfdArchivoIndexar, tfdDirectorioIndice,
                       tfdConsulta;
-    @FXML private RadioButton rdbActualizar;
-    @FXML private Label lblEstadoIndexacion, lblDocumentosEncontrados, lblDocumentosRestantes, lblTiempoConsulta;
+    @FXML private RadioButton rdbActualizar, rdbConsultaPersonalizada;
+    @FXML private Label lblEstadoIndexacion, lblDocumentosEncontrados, lblDocumentosRestantes, lblTiempoConsulta, lblResumenVistaPrevia;;
     @FXML private ComboBox<String> cbxCampos;
 
     // Variables LUCENE
@@ -74,6 +75,14 @@ public class ControladorGeneral implements Controlador {
         clmPagina.setCellValueFactory(new PropertyValueFactory<>("btnPagina"));
         clmPuntaje.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
         tblEscalafon.setPlaceholder(new Label("No hay resultados"));
+        tblEscalafon.getSelectionModel().selectedItemProperty().addListener(
+            (observableValue, docAnterior, docSiguiente) -> {
+                if (observableValue != null) {
+                    if (docSiguiente != null && !docSiguiente.equals(docAnterior))
+                        lblResumenVistaPrevia.setText(docSiguiente.getResumen());
+                }
+            }
+        );
     }
 
     public void limpiarTabla(){
@@ -133,9 +142,11 @@ public class ControladorGeneral implements Controlador {
 
     public void buscar(ActionEvent actionEvent){
         limpiarTabla();
+        lblResumenVistaPrevia.setText("");
         if (validarCamposBusqueda()){
             resultados = buscador.buscarDocumento(tfdDirectorioIndice.getText(),
-                    cbxCampos.getSelectionModel().getSelectedItem(), tfdConsulta.getText(), 20);
+                    cbxCampos.getSelectionModel().getSelectedItem(), tfdConsulta.getText(),
+                    20,rdbConsultaPersonalizada.isSelected());
             paginaActual = 0;
             if (resultados.size() > 0){
                 for (DocumentoEncontrado doc : resultados.get(paginaActual)){
