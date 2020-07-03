@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,12 +27,11 @@ public class Buscador {
     Analizador analizadores;
     Alert msgError, msgAlerta;
     ArrayList<ArrayList<DocumentoEncontrado>> documentosEncontrados;
-    Label lblDocumentosEncontrados, lblTiempoConsulta;
+    Label lblDocumentosEncontrados, lblTiempoConsulta, lblDocumentosColeccion;
     int cantidadPaginas;
-    int paginaActual;
     Pattern patronConsulta;
 
-    Buscador (Analizador _analizadores, Label _lblDocumentosEncontrados, Label _lblTiempoConsulta) {
+    Buscador (Analizador _analizadores, Label _lblDocumentosEncontrados, Label _lblTiempoConsulta, Label _lblDocumentosColeccion) {
         msgError = new Alert(Alert.AlertType.ERROR);
         msgError.setTitle("ERROR");
         msgAlerta = new Alert(Alert.AlertType.WARNING);
@@ -41,6 +39,7 @@ public class Buscador {
         analizadores = _analizadores;
         lblDocumentosEncontrados = _lblDocumentosEncontrados;
         lblTiempoConsulta = _lblTiempoConsulta;
+        lblDocumentosColeccion = _lblDocumentosColeccion;
         patronConsulta = Pattern.compile("(?<titulo>titulo:)(?<vtitulo>[^ ]*)|(?<ref>ref:)(?<vref>[^ ]*)|(?<texto>texto:)(?<vtexto>[^ ]*)|(?<encab>encab:)(?<vencab>[^ ]*)");
     }
 
@@ -195,6 +194,8 @@ public class Buscador {
         try {
             Path directorioIndices = Paths.get(".", directorioIndice);
             lector = DirectoryReader.open(FSDirectory.open(directorioIndices));
+            System.out.println(lector.numDocs());
+            lblDocumentosColeccion.setText("Documentos en la colección: " + lector.numDocs());
         }
         catch (IOException e){
             msgError.setTitle("ERROR");

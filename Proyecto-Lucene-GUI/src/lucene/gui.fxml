@@ -221,6 +221,14 @@
                               </RadioButton>
                            </children>
                         </VBox>
+                        <Label fx:id="lblDocumentosColeccion" textFill="WHITE" wrapText="true" GridPane.columnIndex="3" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="CENTER">
+                           <font>
+                              <Font name="Nadeem Regular" size="13.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                           </GridPane.margin>
+                        </Label>
                      </children>
                   </GridPane>
             </content>
