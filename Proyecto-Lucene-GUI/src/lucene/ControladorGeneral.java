@@ -114,8 +114,9 @@ public class ControladorGeneral implements Controlador {
                 long inicio = System.currentTimeMillis();
                 indexador.configurarIndexador(tfdDirectorioIndexacion.getText(),rdbActualizar.isSelected());
                 int contador = 0;
+                boolean actualizar = rdbActualizar.isSelected();
                 for (Html_Indexado html : archivos) {
-                    indexador.indexarContenidos(html);
+                    indexador.indexarContenidos(html,actualizar,contador);
                     contador++;
                 }
                 // Se cierra la escritura
@@ -126,6 +127,7 @@ public class ControladorGeneral implements Controlador {
                 lblEstadoIndexacion.setText(contador + " documentos indexados de la coleccion "
                                             + tfdArchivoIndexar.getText() + " en " + tiempo
                                             + " segundos");
+
             }
             catch (IOException e){
                 alerta.setTitle("ERROR");
@@ -162,7 +164,7 @@ public class ControladorGeneral implements Controlador {
     }
 
     public void verSiguiente(){
-        if (paginaActual+1 < resultados.size()) {
+        if (!tblEscalafon.getItems().isEmpty() && paginaActual+1 < resultados.size()) {
             limpiarTabla();
             for (DocumentoEncontrado doc : resultados.get(++paginaActual)){
                 tblEscalafon.getItems().add(doc);
