@@ -99,6 +99,7 @@ public class Buscador {
         return null;
     }
 
+//    public String sacarComandosEspeciales
     public Query prepararConsulta(String campoSeleccionado, String textoConsulta, boolean personalidada) {
         Query consulta;
         Analyzer analizadorSeleccionado = null;

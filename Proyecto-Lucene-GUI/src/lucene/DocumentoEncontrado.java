@@ -75,7 +75,9 @@ public class DocumentoEncontrado {
             }
 
             // Crea el archivo del nuevo HTML
-            String tituloMostrarLimpio = tituloMostrar.replace("/","");
+            String tituloMostrarLimpio;
+            tituloMostrarLimpio = tituloMostrar.replace("/","");
+            tituloMostrarLimpio = tituloMostrar.replace(":","");
             tituloMostrarLimpio = limpiarAcentos(tituloMostrarLimpio);
             Path ficheroHTML = Paths.get(".","/htmls/"+tituloMostrarLimpio+".html");
             FileWriter fileWriter = new FileWriter(ficheroHTML.toString());
