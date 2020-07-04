@@ -29,7 +29,7 @@ public class ControladorGeneral implements Controlador {
     @FXML private TextField tfdDirectorioIndexacion, tfdArchivoIndexar, tfdDirectorioIndice,
                       tfdConsulta;
     @FXML private RadioButton rdbActualizar, rdbConsultaPersonalizada;
-    @FXML private Label lblEstadoIndexacion, lblDocumentosEncontrados, lblDocumentosColeccion, lblTiempoConsulta, lblResumenVistaPrevia;;
+    @FXML private Label lblEstadoIndexacion, lblDocumentosEncontrados, lblDocumentosColeccion, lblTiempoConsulta, lblResumenVistaPrevia;
     @FXML private ComboBox<String> cbxCampos;
 
     // Variables LUCENE

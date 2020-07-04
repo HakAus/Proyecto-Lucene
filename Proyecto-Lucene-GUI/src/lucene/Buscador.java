@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,10 +49,10 @@ public class Buscador {
         patronPalabra = Pattern.compile("(?<palabra>[^ ]+)");
         patronFrase = Pattern.compile("(?<frase>\".*\")");
         patronEspeciales = Pattern.compile("[~*^.\\d]+");
-        patronConsulta = Pattern.compile("(?<titulo>(?<campoTitulo>titulo:)(?<contenidoTitulo>(\".*\")|([^ ]+)))|" +
-                                         "(?<texto>(?<campoTexto>texto:)(?<contenidoTexto>(\".*\")|([^ ]+)))|" +
-                                         "(?<ref>(?<campoReferencia>ref:)(?<contenidoReferencia>(\".*\")|([^ ]+)))|" +
-                                         "(?<encab>(?<campoEncabezado>encab:)(?<contenidoEncabezado>(\".*\")|([^ ]+)))|" +
+        patronConsulta = Pattern.compile("(?<titulo>(?<campoTitulo>titulo:)(?<contenidoTitulo>(\"[^\"]+\")|([^ ]+)))|" +
+                                         "(?<texto>(?<campoTexto>texto:)(?<contenidoTexto>(\"[^\"]+\")|([^ ]+)))|" +
+                                         "(?<ref>(?<campoReferencia>ref:)(?<contenidoReferencia>(\"[^\"]+\")|([^ ]+)))|" +
+                                         "(?<encab>(?<campoEncabezado>encab:)(?<contenidoEncabezado>(\"[^\"]+\")|([^ ]+)))|" +
                                          "(?<bool>OR|AND|NOT)|" +
                                          "(?<palabra>[^ ]+)");
     }
@@ -99,7 +98,19 @@ public class Buscador {
         return null;
     }
 
-//    public String sacarComandosEspeciales
+    public String sacarComandosEspeciales(String texto){
+        StringBuilder comandoEspecial = new StringBuilder();
+        for (char caracter : texto.toCharArray()){
+            String c = String.valueOf(caracter);
+
+            if (c.matches(patronEspeciales.pattern())){
+                System.out.println("CHARACTER: " + c);
+                comandoEspecial.append(c);
+            }
+
+        }
+        return comandoEspecial.toString();
+    }
     public Query prepararConsulta(String campoSeleccionado, String textoConsulta, boolean personalidada) {
         Query consulta;
         Analyzer analizadorSeleccionado = null;
@@ -111,18 +122,15 @@ public class Buscador {
                 System.out.println(grupos.group());
                 if (grupos.group().matches(patronTitulo.pattern())){
                     String[] partes = grupos.group().split(":");
+
                     if (partes[1].matches(patronPalabra.pattern()))
                         consultaPersonalizada.append(partes[0]+":").append(quitarStopWords("titulo",partes[1])).append(" ");
+
                     else if (partes[1].matches(patronFrase.pattern())) {
                         StringBuilder fraseSinStopWords = new StringBuilder();
                         String[] palabrasFrase = partes[1].split(" ");
-                        System.out.println("Separacion de la frase: " + palabrasFrase.length);
-                        for (String palabra : palabrasFrase){
-                            System.out.println(palabra);
-                            if (palabra.matches(patronEspeciales.pattern()))
-                                fraseSinStopWords.append(palabra).append(" ");
-                            else
-                                fraseSinStopWords.append(quitarStopWords("titulo", palabra)).append(" ");
+                        for (String palabra : palabrasFrase) {
+                            fraseSinStopWords.append(quitarStopWords("titulo", palabra)).append(" ");
                         }
                         consultaPersonalizada.append(partes[0] + ":").append("\"" + quitarStopWords("titulo", fraseSinStopWords.toString()) + "\"").append(" ");
                     }
@@ -134,9 +142,7 @@ public class Buscador {
                     else if (partes[1].matches(patronFrase.pattern())) {
                         StringBuilder fraseSinStopWords = new StringBuilder();
                         String[] palabrasFrase = partes[1].split(" ");
-                        System.out.println("Separacion de la frase: ");
                         for (String palabra : palabrasFrase){
-                            System.out.println(palabra);
                             fraseSinStopWords.append(quitarStopWords("ref", palabra)).append(" ");
                         }
                         consultaPersonalizada.append(partes[0] + ":").append("\"" + quitarStopWords("ref", fraseSinStopWords.toString()) + "\"").append(" ");
@@ -144,14 +150,14 @@ public class Buscador {
                 }
                 else if (grupos.group().matches(patronTexto.pattern())){
                     String[] partes = grupos.group().split(":");
+
                     if (partes[1].matches(patronPalabra.pattern()))
                         consultaPersonalizada.append(partes[0]+":").append(sacarRaices("texto",partes[1])).append(" ");
+
                     else if (partes[1].matches(patronFrase.pattern())) {
                         StringBuilder fraseConStemming = new StringBuilder();
                         String[] palabrasFrase = partes[1].split(" ");
-                        System.out.println("Separacion de la frase: ");
                         for (String palabra : palabrasFrase){
-                            System.out.println(palabra);
                             fraseConStemming.append(sacarRaices("texto", palabra)).append(" ");
                         }
                         consultaPersonalizada.append(partes[0] + ":").append("\"" + sacarRaices("texto", fraseConStemming.toString()) + "\"").append(" ");
@@ -164,7 +170,6 @@ public class Buscador {
                     else if (partes[1].matches(patronFrase.pattern())) {
                         StringBuilder fraseConStemming = new StringBuilder();
                         String[] palabrasFrase = partes[1].split(" ");
-                        System.out.println("Separacion de la frase: ");
                         for (String palabra : palabrasFrase){
                             System.out.println(palabra);
                             fraseConStemming.append(sacarRaices("encab", palabra)).append(" ");
