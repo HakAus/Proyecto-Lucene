@@ -10,10 +10,7 @@ import javafx.scene.control.Alert;
 import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.snowball.SnowballFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexWriter;
 
 import org.apache.lucene.index.IndexWriterConfig;
@@ -119,7 +116,7 @@ public class Indexador
 			return new TextField(nombre, html, Field.Store.NO);
 	}
 
-	public void indexarContenidos(Html_Indexado html_indexado) {
+	public void indexarContenidos(Html_Indexado html_indexado, boolean actualizar, int id) {
 
 		Document DocumentoLucene = new Document();
 
@@ -223,6 +220,7 @@ public class Indexador
 			msgError.setTitle("ERROR");
 			msgError.setHeaderText("Hubo un error en la indexacion");
 			msgError.setContentText("Revise que las rutas a la carpeta de indexacion y stop words son correctas");
+
 		}
 	}
 }

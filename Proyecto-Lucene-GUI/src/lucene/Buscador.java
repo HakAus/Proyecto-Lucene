@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +30,8 @@ public class Buscador {
     ArrayList<ArrayList<DocumentoEncontrado>> documentosEncontrados;
     Label lblDocumentosEncontrados, lblTiempoConsulta, lblDocumentosColeccion;
     int cantidadPaginas;
-    Pattern patronConsulta;
+    Pattern patronTitulo, patronTexto, patronReferencia, patronEncabezado,
+            patronBooleano, patronConsulta, patronPalabra, patronFrase, patronEspeciales;
 
     Buscador (Analizador _analizadores, Label _lblDocumentosEncontrados, Label _lblTiempoConsulta, Label _lblDocumentosColeccion) {
         msgError = new Alert(Alert.AlertType.ERROR);
@@ -40,7 +42,20 @@ public class Buscador {
         lblDocumentosEncontrados = _lblDocumentosEncontrados;
         lblTiempoConsulta = _lblTiempoConsulta;
         lblDocumentosColeccion = _lblDocumentosColeccion;
-        patronConsulta = Pattern.compile("(?<titulo>titulo:)(?<vtitulo>[^ ]*)|(?<ref>ref:)(?<vref>[^ ]*)|(?<texto>texto:)(?<vtexto>[^ ]*)|(?<encab>encab:)(?<vencab>[^ ]*)");
+        patronTitulo = Pattern.compile("(?<titulo>titulo:)(?<contenidoTitulo>(\".*\")|([^ ]+))");
+        patronTexto = Pattern.compile("(?<texto>texto:)(?<contenidoTexto>(\".*\")|([^ ]+))");
+        patronReferencia = Pattern.compile("(?<ref>ref:)(?<contenidoReferencia>(\".*\")|([^ ]+))");
+        patronEncabezado = Pattern.compile("(?<encab>encab:)(?<contenidoEncabezado>(\".*\")|([^ ]+))");
+        patronBooleano = Pattern.compile("(?<bool>OR|AND|NOT)");
+        patronPalabra = Pattern.compile("(?<palabra>[^ ]+)");
+        patronFrase = Pattern.compile("(?<frase>\".*\")");
+        patronEspeciales = Pattern.compile("[~*^.\\d]+");
+        patronConsulta = Pattern.compile("(?<titulo>(?<campoTitulo>titulo:)(?<contenidoTitulo>(\".*\")|([^ ]+)))|" +
+                                         "(?<texto>(?<campoTexto>texto:)(?<contenidoTexto>(\".*\")|([^ ]+)))|" +
+                                         "(?<ref>(?<campoReferencia>ref:)(?<contenidoReferencia>(\".*\")|([^ ]+)))|" +
+                                         "(?<encab>(?<campoEncabezado>encab:)(?<contenidoEncabezado>(\".*\")|([^ ]+)))|" +
+                                         "(?<bool>OR|AND|NOT)|" +
+                                         "(?<palabra>[^ ]+)");
     }
 
     // Metodos
@@ -50,6 +65,7 @@ public class Buscador {
         CharTermAttribute caracter = stream.addAttribute(CharTermAttribute.class);
         stream.reset();
         while (stream.incrementToken()) {
+            //TODO: SI ALGO ESTA FALLANDO, poner .append(" ") al principio
             tokens.append(" ").append(caracter.toString()).append(" ");
         }
         stream.end();
@@ -88,32 +104,83 @@ public class Buscador {
         Analyzer analizadorSeleccionado = null;
 
         if (personalidada){
-            Matcher comparacion = patronConsulta.matcher(textoConsulta);
-            StringBuilder partesConsulta = new StringBuilder();
-            String cadenaFiltrada;
-            if (comparacion.group("titulo") != null) {
-                cadenaFiltrada = quitarStopWords("titulo",comparacion.group("vtitulo"));
-                partesConsulta.append(comparacion.group("titulo")).append(cadenaFiltrada + " ");
-                analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
-            }
-            if (comparacion.group("ref") != null) {
-                cadenaFiltrada = quitarStopWords("ref",comparacion.group("vref"));
-                partesConsulta.append(comparacion.group("ref")).append(cadenaFiltrada + " ");
-                analizadorSeleccionado = analizadores.analizadorRemoverStopWords;
-            }
-            if (comparacion.group("texto") != null) {
-                cadenaFiltrada = quitarStopWords("texto",comparacion.group("vtexto"));
-                partesConsulta.append(comparacion.group("texto")).append(cadenaFiltrada + " ");
-                analizadorSeleccionado = analizadores.analizadorConStemming;
-            }
-            if (comparacion.group("encab") != null) {
-                cadenaFiltrada = quitarStopWords("encab",comparacion.group("vencab"));
-                partesConsulta.append(comparacion.group("encab")).append(cadenaFiltrada + " ");
-                analizadorSeleccionado = analizadores.analizadorConStemming;
+            StringBuilder consultaPersonalizada = new StringBuilder();
+            Matcher grupos = patronConsulta.matcher(textoConsulta);
+            while (grupos.find()){
+                System.out.println(grupos.group());
+                if (grupos.group().matches(patronTitulo.pattern())){
+                    String[] partes = grupos.group().split(":");
+                    if (partes[1].matches(patronPalabra.pattern()))
+                        consultaPersonalizada.append(partes[0]+":").append(quitarStopWords("titulo",partes[1])).append(" ");
+                    else if (partes[1].matches(patronFrase.pattern())) {
+                        StringBuilder fraseSinStopWords = new StringBuilder();
+                        String[] palabrasFrase = partes[1].split(" ");
+                        System.out.println("Separacion de la frase: " + palabrasFrase.length);
+                        for (String palabra : palabrasFrase){
+                            System.out.println(palabra);
+                            if (palabra.matches(patronEspeciales.pattern()))
+                                fraseSinStopWords.append(palabra).append(" ");
+                            else
+                                fraseSinStopWords.append(quitarStopWords("titulo", palabra)).append(" ");
+                        }
+                        consultaPersonalizada.append(partes[0] + ":").append("\"" + quitarStopWords("titulo", fraseSinStopWords.toString()) + "\"").append(" ");
+                    }
+                }
+                else if (grupos.group().matches(patronReferencia.pattern())){
+                    String[] partes = grupos.group().split(":");
+                    if (partes[1].matches(patronPalabra.pattern()))
+                        consultaPersonalizada.append(partes[0]+":").append(quitarStopWords("ref",partes[1])).append(" ");
+                    else if (partes[1].matches(patronFrase.pattern())) {
+                        StringBuilder fraseSinStopWords = new StringBuilder();
+                        String[] palabrasFrase = partes[1].split(" ");
+                        System.out.println("Separacion de la frase: ");
+                        for (String palabra : palabrasFrase){
+                            System.out.println(palabra);
+                            fraseSinStopWords.append(quitarStopWords("ref", palabra)).append(" ");
+                        }
+                        consultaPersonalizada.append(partes[0] + ":").append("\"" + quitarStopWords("ref", fraseSinStopWords.toString()) + "\"").append(" ");
+                    }
+                }
+                else if (grupos.group().matches(patronTexto.pattern())){
+                    String[] partes = grupos.group().split(":");
+                    if (partes[1].matches(patronPalabra.pattern()))
+                        consultaPersonalizada.append(partes[0]+":").append(sacarRaices("texto",partes[1])).append(" ");
+                    else if (partes[1].matches(patronFrase.pattern())) {
+                        StringBuilder fraseConStemming = new StringBuilder();
+                        String[] palabrasFrase = partes[1].split(" ");
+                        System.out.println("Separacion de la frase: ");
+                        for (String palabra : palabrasFrase){
+                            System.out.println(palabra);
+                            fraseConStemming.append(sacarRaices("texto", palabra)).append(" ");
+                        }
+                        consultaPersonalizada.append(partes[0] + ":").append("\"" + sacarRaices("texto", fraseConStemming.toString()) + "\"").append(" ");
+                    }
+                }
+                else if (grupos.group().matches(patronEncabezado.pattern())){
+                    String[] partes = grupos.group().split(":");
+                    if (partes[1].matches(patronPalabra.pattern()))
+                        consultaPersonalizada.append(partes[0]+":").append(sacarRaices("encab",partes[1])).append(" ");
+                    else if (partes[1].matches(patronFrase.pattern())) {
+                        StringBuilder fraseConStemming = new StringBuilder();
+                        String[] palabrasFrase = partes[1].split(" ");
+                        System.out.println("Separacion de la frase: ");
+                        for (String palabra : palabrasFrase){
+                            System.out.println(palabra);
+                            fraseConStemming.append(sacarRaices("encab", palabra)).append(" ");
+                        }
+                        consultaPersonalizada.append(partes[0] + ":").append("\"" + sacarRaices("encab", fraseConStemming.toString()) + "\"").append(" ");
+                    }
+                }
+                else if (grupos.group().matches(patronBooleano.pattern())){
+                    consultaPersonalizada.append(grupos.group()).append(" ");
+                }
+                else if (grupos.group().matches(patronPalabra.pattern())){
+                    consultaPersonalizada.append(sacarRaices("texto",grupos.group())).append(" ");
+                }
             }
             campoSeleccionado = "texto";
-            textoConsulta = partesConsulta.toString();
-            System.out.println("Consulta personalidada: " + textoConsulta);
+            textoConsulta = consultaPersonalizada.toString();
+            analizadorSeleccionado = analizadores.analizadorSimple;
         }
         else {
             if (campoSeleccionado.equals("")) {
@@ -130,9 +197,9 @@ public class Buscador {
         QueryParser parser = new QueryParser(campoSeleccionado, analizadorSeleccionado);
         String consultaSinTildes = analizadores.limpiarAcentos(textoConsulta, true);
         try {
-            System.out.println("consultaSinTildes:" + consultaSinTildes);
+            System.out.println("consulta ANTES de parsing:" + consultaSinTildes);
             consulta = parser.parse(consultaSinTildes);
-            System.out.println("consulta despues de parsing:" + consulta);
+            System.out.println("consulta DESPUES de parsing:" + consulta);
             return consulta;
         }
         catch (ParseException e){
@@ -194,7 +261,6 @@ public class Buscador {
         try {
             Path directorioIndices = Paths.get(".", directorioIndice);
             lector = DirectoryReader.open(FSDirectory.open(directorioIndices));
-            System.out.println(lector.numDocs());
             lblDocumentosColeccion.setText("Documentos en la colección: " + lector.numDocs());
         }
         catch (IOException e){
